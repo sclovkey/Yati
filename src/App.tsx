@@ -75,7 +75,7 @@ export default function App() {
   // Firestore synchronization states
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<boolean>(false);
-  const isFetchedFromFirestoreRef = useRef(false);
+  const [isFetchedFromFirestore, setIsFetchedFromFirestore] = useState(false);
   
   // In-app banner alert state for reminders
   const [inAppAlert, setInAppAlert] = useState<{ show: boolean; title: string; body: string }>({
@@ -95,13 +95,13 @@ export default function App() {
         setNotifSettings(INITIAL_NOTIF_SETTINGS);
         setAttendance([]);
         setOfficeLoc(DEFAULT_OFFICE);
-        isFetchedFromFirestoreRef.current = false;
+        setIsFetchedFromFirestore(false);
         return;
       }
 
       setIsSyncing(true);
       setSyncError(false);
-      isFetchedFromFirestoreRef.current = false;
+      setIsFetchedFromFirestore(false);
 
       try {
         // Fetch all app data for this user from Firestore
@@ -193,7 +193,7 @@ export default function App() {
         setOfficeLoc(savedOffice ? JSON.parse(savedOffice) : DEFAULT_OFFICE);
       } finally {
         if (active) {
-          isFetchedFromFirestoreRef.current = true;
+          setIsFetchedFromFirestore(true);
           setIsSyncing(false);
         }
       }
@@ -208,7 +208,7 @@ export default function App() {
 
   // 4. Save state back to local cache & Sync to Firestore (Debounced to optimize writes)
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || !isFetchedFromFirestore) return;
     
     // Always save to local cache instantly for instant offline fallback
     localStorage.setItem(`yati_magang_logs_${currentUser}`, JSON.stringify(logs));
@@ -218,26 +218,24 @@ export default function App() {
     localStorage.setItem(`yati_magang_office_loc_${currentUser}`, JSON.stringify(officeLoc));
 
     // Debounced Firestore upload
-    if (isFetchedFromFirestoreRef.current) {
-      const timer = setTimeout(async () => {
-        setIsSyncing(true);
-        setSyncError(false);
-        const success = await saveFirestoreUserData(currentUser, {
-          logs,
-          info,
-          notifSettings,
-          attendance,
-          officeLoc
-        });
-        if (!success) {
-          setSyncError(true);
-        }
-        setIsSyncing(false);
-      }, 1000); // 1-second debounce window
+    const timer = setTimeout(async () => {
+      setIsSyncing(true);
+      setSyncError(false);
+      const success = await saveFirestoreUserData(currentUser, {
+        logs,
+        info,
+        notifSettings,
+        attendance,
+        officeLoc
+      });
+      if (!success) {
+        setSyncError(true);
+      }
+      setIsSyncing(false);
+    }, 1000); // 1-second debounce window
 
-      return () => clearTimeout(timer);
-    }
-  }, [logs, info, notifSettings, attendance, officeLoc, currentUser]);
+    return () => clearTimeout(timer);
+  }, [logs, info, notifSettings, attendance, officeLoc, currentUser, isFetchedFromFirestore]);
 
   // 3. Background timer check for notifications (every 30 seconds)
   useEffect(() => {
