@@ -15,6 +15,7 @@ import AttendanceSystem from './components/AttendanceSystem';
 import AuthScreen from './components/AuthScreen';
 import { checkAndTriggerReminder } from './utils/notification';
 import { getFirestoreUserData, saveFirestoreUserData } from './lib/dbService';
+import { autoHealAttendancePhotos } from './lib/imageCompressor';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -76,7 +77,14 @@ export default function App() {
   // Firestore synchronization states
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<boolean>(false);
-  const isFetchedFromFirestoreRef = useRef(false);
+  const [isFetchedFromFirestore, setIsFetchedFromFirestore] = useState(false);
+
+  // Synchronously reset fetched status when user changes to prevent writing previous user's data to new user
+  const [lastUser, setLastUser] = useState<string | null>(currentUser);
+  if (currentUser !== lastUser) {
+    setLastUser(currentUser);
+    setIsFetchedFromFirestore(false);
+  }
   
   // In-app banner alert state for reminders
   const [inAppAlert, setInAppAlert] = useState<{ show: boolean; title: string; body: string }>({
@@ -96,13 +104,13 @@ export default function App() {
         setNotifSettings(INITIAL_NOTIF_SETTINGS);
         setAttendance([]);
         setOfficeLoc(DEFAULT_OFFICE);
-        isFetchedFromFirestoreRef.current = false;
+        setIsFetchedFromFirestore(false);
         return;
       }
 
       setIsSyncing(true);
       setSyncError(false);
-      isFetchedFromFirestoreRef.current = false;
+      setIsFetchedFromFirestore(false);
 
       try {
         // Fetch all app data for this user from Firestore
@@ -114,14 +122,19 @@ export default function App() {
           if (firestoreData.logs) setLogs(firestoreData.logs);
           if (firestoreData.info) setInfo(firestoreData.info);
           if (firestoreData.notifSettings) setNotifSettings(firestoreData.notifSettings);
-          if (firestoreData.attendance) setAttendance(firestoreData.attendance);
+          
+          // Auto-heal and compress any large photos loaded from Firestore
+          const rawAttendance = firestoreData.attendance || [];
+          const cleanAttendance = await autoHealAttendancePhotos(rawAttendance);
+          setAttendance(cleanAttendance);
+          
           if (firestoreData.officeLoc) setOfficeLoc(firestoreData.officeLoc);
           
           // Seed local cache too
           localStorage.setItem(`yati_magang_logs_${currentUser}`, JSON.stringify(firestoreData.logs || []));
           localStorage.setItem(`yati_magang_info_${currentUser}`, JSON.stringify(firestoreData.info || INITIAL_INFO));
           localStorage.setItem(`yati_magang_notif_settings_${currentUser}`, JSON.stringify(firestoreData.notifSettings || INITIAL_NOTIF_SETTINGS));
-          localStorage.setItem(`yati_magang_attendance_${currentUser}`, JSON.stringify(firestoreData.attendance || []));
+          localStorage.setItem(`yati_magang_attendance_${currentUser}`, JSON.stringify(cleanAttendance));
           localStorage.setItem(`yati_magang_office_loc_${currentUser}`, JSON.stringify(firestoreData.officeLoc || DEFAULT_OFFICE));
         } else {
           // Fallback to local storage migration if document doesn't exist on Firestore
@@ -153,6 +166,8 @@ export default function App() {
 
           const savedAttendanceStr = localStorage.getItem(`yati_magang_attendance_${currentUser}`);
           const currentAttendance = savedAttendanceStr ? JSON.parse(savedAttendanceStr) : [];
+          // Auto-heal local storage attendance photos on migration
+          const cleanAttendance = await autoHealAttendancePhotos(currentAttendance);
 
           const savedOfficeStr = localStorage.getItem(`yati_magang_office_loc_${currentUser}`);
           const currentOffice = savedOfficeStr ? JSON.parse(savedOfficeStr) : DEFAULT_OFFICE;
@@ -160,7 +175,7 @@ export default function App() {
           setLogs(currentLogs);
           setInfo(currentInfo);
           setNotifSettings(currentNotif);
-          setAttendance(currentAttendance);
+          setAttendance(cleanAttendance);
           setOfficeLoc(currentOffice);
 
           // Write initial payload to Firestore
@@ -168,7 +183,7 @@ export default function App() {
             logs: currentLogs,
             info: currentInfo,
             notifSettings: currentNotif,
-            attendance: currentAttendance,
+            attendance: cleanAttendance,
             officeLoc: currentOffice
           });
         }
@@ -188,13 +203,15 @@ export default function App() {
         setNotifSettings(savedNotif ? JSON.parse(savedNotif) : INITIAL_NOTIF_SETTINGS);
 
         const savedAttendance = localStorage.getItem(`yati_magang_attendance_${currentUser}`);
-        setAttendance(savedAttendance ? JSON.parse(savedAttendance) : []);
+        const parsedAttendance = savedAttendance ? JSON.parse(savedAttendance) : [];
+        const cleanAttendance = await autoHealAttendancePhotos(parsedAttendance);
+        setAttendance(cleanAttendance);
 
         const savedOffice = localStorage.getItem(`yati_magang_office_loc_${currentUser}`);
         setOfficeLoc(savedOffice ? JSON.parse(savedOffice) : DEFAULT_OFFICE);
       } finally {
         if (active) {
-          isFetchedFromFirestoreRef.current = true;
+          setIsFetchedFromFirestore(true);
           setIsSyncing(false);
         }
       }
@@ -209,7 +226,7 @@ export default function App() {
 
   // 4. Save state back to local cache & Sync to Firestore (Debounced to optimize writes)
   useEffect(() => {
-    if (!currentUser || !isFetchedFromFirestoreRef.current) return;
+    if (!currentUser || !isFetchedFromFirestore) return;
     
     // Always save to local cache instantly for instant offline fallback
     localStorage.setItem(`yati_magang_logs_${currentUser}`, JSON.stringify(logs));
@@ -236,7 +253,7 @@ export default function App() {
     }, 1000); // 1-second debounce window
 
     return () => clearTimeout(timer);
-  }, [logs, info, notifSettings, attendance, officeLoc, currentUser]);
+  }, [logs, info, notifSettings, attendance, officeLoc, currentUser, isFetchedFromFirestore]);
 
   // 3. Background timer check for notifications (every 30 seconds)
   useEffect(() => {
