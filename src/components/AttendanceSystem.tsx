@@ -107,6 +107,10 @@ export default function AttendanceSystem({
   // Find today's attendance record
   const todayRecord = attendanceLogs.find(log => log.date === todayStr);
 
+  const [cameraEnabled, setCameraEnabled] = useState(!todayRecord);
+  const isMounted = useRef(true);
+  const shouldCameraRunRef = useRef(false);
+
   // Get current position
   const getGeoLocation = () => {
     if (!navigator.geolocation) {
@@ -182,6 +186,7 @@ export default function AttendanceSystem({
 
   // Start Camera
   const startCamera = async () => {
+    if (!isMounted.current) return;
     setCapturedPhoto(null);
     setCameraError(null);
     try {
@@ -218,9 +223,20 @@ export default function AttendanceSystem({
         }
       }
       
+      // CRITICAL RACE CONDITION CHECK:
+      // If the component was unmounted OR if the camera should no longer be active/running,
+      // stop the tracks immediately to prevent active camera leaks in the browser!
+      if (!isMounted.current || !shouldCameraRunRef.current) {
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+        return;
+      }
+
       streamRef.current = stream;
       setCameraActive(true);
     } catch (err: any) {
+      if (!isMounted.current || !shouldCameraRunRef.current) return;
       console.warn('Camera access (non-fatal warning):', err);
       const isDeviceNotFound = err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError' || err.message?.includes('not found');
       if (isDeviceNotFound) {
@@ -244,9 +260,12 @@ export default function AttendanceSystem({
   const hasClockedOut = todayRecord ? (todayRecord.status === 'Sakit' || todayRecord.status === 'Izin' || !!todayRecord.clockOutTime) : false;
   const hasPhoto = !!capturedPhoto;
 
+  const shouldRun = !hasClockedOut && presenceTab === 'hadir' && !hasPhoto && cameraEnabled;
+  shouldCameraRunRef.current = shouldRun;
+
   useEffect(() => {
-    if (!hasClockedOut && presenceTab === 'hadir') {
-      if (!hasPhoto && !cameraActive && !cameraError) {
+    if (shouldRun) {
+      if (!cameraActive && !cameraError) {
         startCamera();
       }
     } else {
@@ -254,11 +273,14 @@ export default function AttendanceSystem({
         stopCamera();
       }
     }
-  }, [hasClockedOut, hasPhoto, cameraActive, cameraError, presenceTab]);
+  }, [shouldRun, cameraActive, cameraError]);
 
   // Cleanup camera stream on unmount
   useEffect(() => {
+    isMounted.current = true;
     return () => {
+      isMounted.current = false;
+      shouldCameraRunRef.current = false;
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
@@ -343,6 +365,7 @@ export default function AttendanceSystem({
 
     onSaveAttendance(newRecord);
     setCapturedPhoto(null);
+    setCameraEnabled(false);
   };
 
   // Check Out handler
@@ -370,6 +393,7 @@ export default function AttendanceSystem({
 
     onSaveAttendance(updatedRecord);
     setCapturedPhoto(null);
+    setCameraEnabled(false);
   };
 
   const handleExportPDF = () => {
@@ -912,7 +936,7 @@ export default function AttendanceSystem({
             <div className="space-y-3">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Foto Bukti Aktivitas / Selfie</label>
               
-              <div className="relative aspect-video rounded-2xl bg-gray-950 border border-gray-100 overflow-hidden flex flex-col items-center justify-center text-center">
+              <div className="relative aspect-[4/3] rounded-2xl bg-gray-950 border border-gray-100 overflow-hidden flex flex-col items-center justify-center text-center">
                  {cameraActive ? (
                   <video 
                     ref={videoRefCallback} 
@@ -960,6 +984,27 @@ export default function AttendanceSystem({
                       </label>
                     </div>
                   </div>
+                ) : !cameraEnabled ? (
+                  <div className="p-6 space-y-3 z-10 text-center animate-fadeIn">
+                    <div className="w-12 h-12 bg-gray-800/80 rounded-2xl flex items-center justify-center mx-auto text-gray-300">
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <h4 className="text-xs font-bold text-gray-200 font-sans">Kamera Belum Aktif</h4>
+                    <p className="text-[10px] text-gray-400 max-w-xs mx-auto font-sans leading-relaxed">
+                      Silakan aktifkan kamera terlebih dahulu untuk melakukan swafoto presensi, atau gunakan tombol unggah manual di bawah.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCameraError(null);
+                        setCameraEnabled(true);
+                      }}
+                      className="mt-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-extrabold transition-all inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      Aktifkan Kamera
+                    </button>
+                  </div>
                 ) : (
                   <div className="p-6 space-y-2">
                     <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto text-white animate-pulse">
@@ -987,6 +1032,7 @@ export default function AttendanceSystem({
                       onClick={() => {
                         setCapturedPhoto(null);
                         setCameraError(null);
+                        setCameraEnabled(true);
                       }}
                       className="px-4 py-2 bg-gray-900/90 hover:bg-gray-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-sm shadow-sm cursor-pointer"
                     >

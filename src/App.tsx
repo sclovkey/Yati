@@ -11,6 +11,7 @@ import LogbookList from './components/LogbookList';
 import NotificationSettings from './components/NotificationSettings';
 import BackupSettings from './components/BackupSettings';
 import AttendanceSystem from './components/AttendanceSystem';
+import AuthScreen from './components/AuthScreen';
 import { checkAndTriggerReminder } from './utils/notification';
 import { 
   LayoutDashboard, 
@@ -22,7 +23,8 @@ import {
   AlertTriangle,
   X,
   FileText,
-  UserCheck
+  UserCheck,
+  LogOut
 } from 'lucide-react';
 
 // Pre-seeded sample data for onboarding
@@ -51,54 +53,17 @@ const DEFAULT_OFFICE: OfficeLocation = {
 };
 
 export default function App() {
-  // 1. Core States with LocalStorage Hydration
-  const [logs, setLogs] = useState<LogEntry[]>(() => {
-    const saved = localStorage.getItem('yati_magang_logs');
-    return saved ? JSON.parse(saved) : INITIAL_LOGS;
+  // 1. Current Session State
+  const [currentUser, setCurrentUser] = useState<string | null>(() => {
+    return localStorage.getItem('yati_magang_active_username');
   });
 
-  const [info, setInfo] = useState<InternshipInfo>(() => {
-    const saved = localStorage.getItem('yati_magang_info');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.companyName === 'PT Digital Solusi Nusantara' || parsed.companyName === 'PT Digital Solusi Nusantara') {
-        return INITIAL_INFO;
-      }
-      return parsed;
-    }
-    return INITIAL_INFO;
-  });
-
-  const [notifSettings, setNotifSettings] = useState<SettingsType>(() => {
-    const saved = localStorage.getItem('yati_magang_notif_settings');
-    return saved ? JSON.parse(saved) : INITIAL_NOTIF_SETTINGS;
-  });
-
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>(() => {
-    const hasCleared = localStorage.getItem('yati_magang_attendance_cleared_v2');
-    if (!hasCleared) {
-      localStorage.removeItem('yati_magang_attendance');
-      localStorage.setItem('yati_magang_attendance_cleared_v2', 'true');
-      return [];
-    }
-    const saved = localStorage.getItem('yati_magang_attendance');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [officeLoc, setOfficeLoc] = useState<OfficeLocation>(() => {
-    const saved = localStorage.getItem('yati_magang_office_loc');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.name === 'Kantor PT Digital Solusi Nusantara' || Math.abs(parsed.latitude - (-6.2)) < 0.01) {
-        return DEFAULT_OFFICE;
-      }
-      if (parsed.radius === 150) {
-        parsed.radius = 600;
-      }
-      return parsed;
-    }
-    return DEFAULT_OFFICE;
-  });
+  // 2. Core States
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [info, setInfo] = useState<InternshipInfo>(INITIAL_INFO);
+  const [notifSettings, setNotifSettings] = useState<SettingsType>(INITIAL_NOTIF_SETTINGS);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [officeLoc, setOfficeLoc] = useState<OfficeLocation>(DEFAULT_OFFICE);
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'logbook' | 'tambah' | 'presensi' | 'notifikasi' | 'profil'>('dashboard');
   const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
@@ -110,26 +75,109 @@ export default function App() {
     body: ''
   });
 
-  // 2. Persist state changes to local storage
+  // 3. Hydrate state whenever active user changes and migrate any anonymous data if needed
   useEffect(() => {
-    localStorage.setItem('yati_magang_logs', JSON.stringify(logs));
-  }, [logs]);
+    if (currentUser) {
+      // Migrate anonymous data if it exists and user has no user-specific data yet
+      const userLogsStr = localStorage.getItem(`yati_magang_logs_${currentUser}`);
+      if (!userLogsStr) {
+        const anonLogs = localStorage.getItem('yati_magang_logs');
+        if (anonLogs && JSON.parse(anonLogs).length > 0) {
+          localStorage.setItem(`yati_magang_logs_${currentUser}`, anonLogs);
+        }
+      }
+
+      const userAttendanceStr = localStorage.getItem(`yati_magang_attendance_${currentUser}`);
+      if (!userAttendanceStr) {
+        const anonAttendance = localStorage.getItem('yati_magang_attendance');
+        if (anonAttendance && JSON.parse(anonAttendance).length > 0) {
+          localStorage.setItem(`yati_magang_attendance_${currentUser}`, anonAttendance);
+        }
+      }
+
+      const userInfoStr = localStorage.getItem(`yati_magang_info_${currentUser}`);
+      if (!userInfoStr) {
+        const anonInfo = localStorage.getItem('yati_magang_info');
+        if (anonInfo) {
+          localStorage.setItem(`yati_magang_info_${currentUser}`, anonInfo);
+        }
+      }
+
+      // Now fetch user-specific data
+      const savedLogs = localStorage.getItem(`yati_magang_logs_${currentUser}`);
+      setLogs(savedLogs ? JSON.parse(savedLogs) : INITIAL_LOGS);
+
+      const savedInfo = localStorage.getItem(`yati_magang_info_${currentUser}`);
+      if (savedInfo) {
+        setInfo(JSON.parse(savedInfo));
+      } else {
+        // Fallback: search in registered users table
+        const users = JSON.parse(localStorage.getItem('yati_magang_users') || '[]');
+        const matchedUser = users.find((u: any) => u.username === currentUser);
+        if (matchedUser) {
+          const seededInfo: InternshipInfo = {
+            studentName: matchedUser.studentName || currentUser,
+            institution: matchedUser.institution || 'Universitas Lambung Mangkurat',
+            companyName: 'Bank Kalsel Kantor Pusat',
+            startDate: new Date(Date.now() - 24 * 60 * 60 * 1000 * 30).toISOString().split('T')[0],
+            endDate: new Date(Date.now() + 24 * 60 * 60 * 1000 * 60).toISOString().split('T')[0],
+            position: matchedUser.position || 'Staf IT Developer Intern',
+            mentorName: matchedUser.mentorName || 'Akhmad Fauzi, S.Kom'
+          };
+          setInfo(seededInfo);
+          localStorage.setItem(`yati_magang_info_${currentUser}`, JSON.stringify(seededInfo));
+        } else {
+          setInfo(INITIAL_INFO);
+        }
+      }
+
+      const savedNotif = localStorage.getItem(`yati_magang_notif_settings_${currentUser}`);
+      setNotifSettings(savedNotif ? JSON.parse(savedNotif) : INITIAL_NOTIF_SETTINGS);
+
+      const savedAttendance = localStorage.getItem(`yati_magang_attendance_${currentUser}`);
+      setAttendance(savedAttendance ? JSON.parse(savedAttendance) : []);
+
+      const savedOffice = localStorage.getItem(`yati_magang_office_loc_${currentUser}`);
+      setOfficeLoc(savedOffice ? JSON.parse(savedOffice) : DEFAULT_OFFICE);
+    } else {
+      setLogs([]);
+      setInfo(INITIAL_INFO);
+      setNotifSettings(INITIAL_NOTIF_SETTINGS);
+      setAttendance([]);
+      setOfficeLoc(DEFAULT_OFFICE);
+    }
+  }, [currentUser]);
+
+  // 4. Save state back to user-specific local storage
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`yati_magang_logs_${currentUser}`, JSON.stringify(logs));
+    }
+  }, [logs, currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('yati_magang_info', JSON.stringify(info));
-  }, [info]);
+    if (currentUser) {
+      localStorage.setItem(`yati_magang_info_${currentUser}`, JSON.stringify(info));
+    }
+  }, [info, currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('yati_magang_notif_settings', JSON.stringify(notifSettings));
-  }, [notifSettings]);
+    if (currentUser) {
+      localStorage.setItem(`yati_magang_notif_settings_${currentUser}`, JSON.stringify(notifSettings));
+    }
+  }, [notifSettings, currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('yati_magang_attendance', JSON.stringify(attendance));
-  }, [attendance]);
+    if (currentUser) {
+      localStorage.setItem(`yati_magang_attendance_${currentUser}`, JSON.stringify(attendance));
+    }
+  }, [attendance, currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('yati_magang_office_loc', JSON.stringify(officeLoc));
-  }, [officeLoc]);
+    if (currentUser) {
+      localStorage.setItem(`yati_magang_office_loc_${currentUser}`, JSON.stringify(officeLoc));
+    }
+  }, [officeLoc, currentUser]);
 
   // 3. Background timer check for notifications (every 30 seconds)
   useEffect(() => {
@@ -223,6 +271,16 @@ export default function App() {
   const handleEditTrigger = (log: LogEntry) => {
     setEditingLog(log);
     setActiveTab('tambah');
+  };
+
+  if (!currentUser) {
+    return <AuthScreen onLoginSuccess={(username) => setCurrentUser(username)} />;
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('yati_magang_active_username');
+    setCurrentUser(null);
+    setActiveTab('dashboard');
   };
 
   return (
@@ -335,6 +393,16 @@ export default function App() {
               <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-xs text-gray-600">
                 {info.studentName ? info.studentName.charAt(0) : 'M'}
               </div>
+              
+              <div className="h-5 w-[1px] bg-gray-150 mx-1"></div>
+              
+              <button
+                onClick={handleLogout}
+                title="Keluar Akun"
+                className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -396,6 +464,7 @@ export default function App() {
               onUpdateInfo={setInfo}
               onImportLogs={handleImportData}
               onClearLogs={handleClearData}
+              onLogout={handleLogout}
             />
           )}
         </div>

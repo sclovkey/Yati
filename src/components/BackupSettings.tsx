@@ -5,7 +5,7 @@
 
 import React, { useState, useRef } from 'react';
 import { InternshipInfo, LogEntry } from '../types';
-import { User, Building, Calendar, Clipboard, Download, Upload, Trash2, Save, FileSpreadsheet, RefreshCcw } from 'lucide-react';
+import { User, Building, Calendar, Clipboard, Download, Upload, Trash2, Save, FileSpreadsheet, RefreshCcw, LogOut } from 'lucide-react';
 
 interface BackupSettingsProps {
   info: InternshipInfo;
@@ -13,6 +13,7 @@ interface BackupSettingsProps {
   onUpdateInfo: (info: InternshipInfo) => void;
   onImportLogs: (importedLogs: LogEntry[], importedInfo?: InternshipInfo) => void;
   onClearLogs: () => void;
+  onLogout?: () => void;
 }
 
 export default function BackupSettings({
@@ -20,7 +21,8 @@ export default function BackupSettings({
   logs,
   onUpdateInfo,
   onImportLogs,
-  onClearLogs
+  onClearLogs,
+  onLogout
 }: BackupSettingsProps) {
   // Local profile state
   const [profile, setProfile] = useState<InternshipInfo>({ ...info });
@@ -285,6 +287,26 @@ export default function BackupSettings({
             </label>
           </div>
         </div>
+
+        {/* Logout Card */}
+        {onLogout && (
+          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs space-y-4 animate-fadeIn">
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Sesi Pengguna</h3>
+              <p className="text-xs text-gray-400">Keluar dari akun Anda saat ini untuk berganti akun lain.</p>
+            </div>
+            <div className="pt-3 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={onLogout}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold rounded-xl transition-all cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 text-gray-500" />
+                Keluar dari Akun
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Danger Zone Card */}
         <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs space-y-4">
