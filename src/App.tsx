@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
 import { LogEntry, InternshipInfo, NotificationSettings as SettingsType, AttendanceRecord, OfficeLocation } from './types';
 import Dashboard from './components/Dashboard';
 import LogbookForm from './components/LogbookForm';
@@ -639,57 +638,48 @@ export default function App() {
       </footer>
 
       {/* 6. Custom Logout Confirmation Dialog */}
-      <AnimatePresence>
-        {showLogoutConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowLogoutConfirm(false)}
-              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
-            />
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            onClick={() => setShowLogoutConfirm(false)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-300 animate-fadeIn"
+          />
 
-            {/* Modal Body */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ type: 'spring', duration: 0.4 }}
-              className="relative w-full max-w-sm bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-100 flex flex-col items-center text-center z-10"
-            >
-              {/* Decorative Warning Icon Container */}
-              <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 mb-5">
-                <LogOut className="w-6 h-6" />
-              </div>
+          {/* Modal Body */}
+          <div
+            className="relative w-full max-w-sm bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-100 flex flex-col items-center text-center z-10 animate-fadeIn"
+          >
+            {/* Decorative Warning Icon Container */}
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 mb-5">
+              <LogOut className="w-6 h-6" />
+            </div>
 
-              <h3 className="text-lg font-bold text-gray-900 tracking-tight">Keluar dari Akun?</h3>
-              <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-                Apakah Anda yakin ingin keluar? Semua data logbook Anda saat ini telah tersinkronisasi dengan aman di Cloud.
-              </p>
+            <h3 className="text-lg font-bold text-gray-900 tracking-tight">Keluar dari Akun?</h3>
+            <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+              Apakah Anda yakin ingin keluar? Semua data logbook Anda saat ini telah tersinkronisasi dengan aman di Cloud.
+            </p>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 w-full mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowLogoutConfirm(false)}
-                  className="flex-1 py-3 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all cursor-pointer border border-gray-100"
-                >
-                  Batal
-                </button>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex-1 py-3 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 active:bg-rose-700 rounded-xl transition-all cursor-pointer shadow-lg shadow-rose-600/15"
-                >
-                  Ya, Keluar
-                </button>
-              </div>
-            </motion.div>
+            {/* Action Buttons */}
+            <div className="flex gap-3 w-full mt-6">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all cursor-pointer border border-gray-100"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex-1 py-3 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 active:bg-rose-700 rounded-xl transition-all cursor-pointer shadow-lg shadow-rose-600/15"
+              >
+                Ya, Keluar
+              </button>
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

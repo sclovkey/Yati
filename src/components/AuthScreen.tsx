@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
 import { User, Lock, ArrowRight, UserPlus, LogIn, GraduationCap, Building, Award, AlertCircle, Loader2 } from 'lucide-react';
 import { getFirestoreUser, createFirestoreUser } from '../lib/dbService';
 
@@ -221,7 +220,7 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white/80 backdrop-blur-md py-8 px-6 sm:px-10 rounded-3xl shadow-xl shadow-gray-100/70 border border-gray-100/50">
           
-          {/* Custom Tabs Switcher with Motion */}
+          {/* Custom Tabs Switcher */}
           <div className="flex bg-gray-50 p-1 rounded-2xl mb-8 relative z-0">
             <button
               onClick={() => {
@@ -229,17 +228,10 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                 setError(null);
                 setSuccess(null);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer relative ${
-                isLogin ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                isLogin ? 'text-gray-900 bg-white shadow-xs border border-gray-100/50' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
-              {isLogin && (
-                <motion.div
-                  layoutId="active-tab"
-                  className="absolute inset-0 bg-white rounded-xl shadow-xs border border-gray-100 -z-10"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                />
-              )}
               <LogIn className="w-3.5 h-3.5" />
               Masuk
             </button>
@@ -249,17 +241,10 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                 setError(null);
                 setSuccess(null);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer relative ${
-                !isLogin ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                !isLogin ? 'text-gray-900 bg-white shadow-xs border border-gray-100/50' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
-              {!isLogin && (
-                <motion.div
-                  layoutId="active-tab"
-                  className="absolute inset-0 bg-white rounded-xl shadow-xs border border-gray-100 -z-10"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                />
-              )}
               <UserPlus className="w-3.5 h-3.5" />
               Daftar Baru
             </button>
@@ -267,25 +252,21 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
 
           {/* Feedback Alert Messages */}
           {error && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-700 flex gap-3 items-start text-xs leading-relaxed"
+            <div 
+              className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-700 flex gap-3 items-start text-xs leading-relaxed animate-fadeIn"
             >
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
-            </motion.div>
+            </div>
           )}
 
           {success && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 flex gap-3 items-start text-xs leading-relaxed"
+            <div 
+              className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 flex gap-3 items-start text-xs leading-relaxed animate-fadeIn"
             >
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{success}</span>
-            </motion.div>
+            </div>
           )}
 
           {isLogin ? (
