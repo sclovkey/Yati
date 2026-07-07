@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - master # Menjalankan otomatis saat push ke branch main atau master
+      - master # Triggers on main or master pushes
 
 permissions:
   contents: read
