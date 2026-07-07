@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AttendanceRecord, OfficeLocation, InternshipInfo } from '../types';
-import { compressBase64Image } from '../lib/imageCompressor';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { 
@@ -300,12 +299,8 @@ export default function AttendanceSystem({
         ctx.scale(-1, 1); // Flip horizontally for selfie effect
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        
-        // Compress photo to 240x180 JPEG for tiny cloud/local footprint
-        compressBase64Image(dataUrl, 240, 180, 0.6).then((compressed) => {
-          setCapturedPhoto(compressed);
-          stopCamera();
-        });
+        setCapturedPhoto(dataUrl);
+        stopCamera();
       }
     }
   };
@@ -316,11 +311,7 @@ export default function AttendanceSystem({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const rawBase64 = reader.result as string;
-        // Compress uploaded files to a maximum of 320x240 for safety and performance
-        compressBase64Image(rawBase64, 320, 240, 0.6).then((compressed) => {
-          setCapturedPhoto(compressed);
-        });
+        setCapturedPhoto(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -916,10 +907,7 @@ export default function AttendanceSystem({
                           if (file) {
                             const reader = new FileReader();
                             reader.onloadend = () => {
-                              const rawBase64 = reader.result as string;
-                              compressBase64Image(rawBase64, 320, 240, 0.6).then((compressed) => {
-                                setNonPresencePhoto(compressed);
-                              });
+                              setNonPresencePhoto(reader.result as string);
                             };
                             reader.readAsDataURL(file);
                           }

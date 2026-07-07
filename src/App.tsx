@@ -14,7 +14,6 @@ import AttendanceSystem from './components/AttendanceSystem';
 import AuthScreen from './components/AuthScreen';
 import { checkAndTriggerReminder } from './utils/notification';
 import { getFirestoreUserData, saveFirestoreUserData } from './lib/dbService';
-import { autoHealAttendancePhotos } from './lib/imageCompressor';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -76,14 +75,7 @@ export default function App() {
   // Firestore synchronization states
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<boolean>(false);
-  const [isFetchedFromFirestore, setIsFetchedFromFirestore] = useState(false);
-
-  // Synchronously reset fetched status when user changes to prevent writing previous user's data to new user
-  const [lastUser, setLastUser] = useState<string | null>(currentUser);
-  if (currentUser !== lastUser) {
-    setLastUser(currentUser);
-    setIsFetchedFromFirestore(false);
-  }
+  const isFetchedFromFirestoreRef = useRef(false);
   
   // In-app banner alert state for reminders
   const [inAppAlert, setInAppAlert] = useState<{ show: boolean; title: string; body: string }>({
@@ -103,13 +95,13 @@ export default function App() {
         setNotifSettings(INITIAL_NOTIF_SETTINGS);
         setAttendance([]);
         setOfficeLoc(DEFAULT_OFFICE);
-        setIsFetchedFromFirestore(false);
+        isFetchedFromFirestoreRef.current = false;
         return;
       }
 
       setIsSyncing(true);
       setSyncError(false);
-      setIsFetchedFromFirestore(false);
+      isFetchedFromFirestoreRef.current = false;
 
       try {
         // Fetch all app data for this user from Firestore
@@ -121,19 +113,14 @@ export default function App() {
           if (firestoreData.logs) setLogs(firestoreData.logs);
           if (firestoreData.info) setInfo(firestoreData.info);
           if (firestoreData.notifSettings) setNotifSettings(firestoreData.notifSettings);
-          
-          // Auto-heal and compress any large photos loaded from Firestore
-          const rawAttendance = firestoreData.attendance || [];
-          const cleanAttendance = await autoHealAttendancePhotos(rawAttendance);
-          setAttendance(cleanAttendance);
-          
+          if (firestoreData.attendance) setAttendance(firestoreData.attendance);
           if (firestoreData.officeLoc) setOfficeLoc(firestoreData.officeLoc);
           
           // Seed local cache too
           localStorage.setItem(`yati_magang_logs_${currentUser}`, JSON.stringify(firestoreData.logs || []));
           localStorage.setItem(`yati_magang_info_${currentUser}`, JSON.stringify(firestoreData.info || INITIAL_INFO));
           localStorage.setItem(`yati_magang_notif_settings_${currentUser}`, JSON.stringify(firestoreData.notifSettings || INITIAL_NOTIF_SETTINGS));
-          localStorage.setItem(`yati_magang_attendance_${currentUser}`, JSON.stringify(cleanAttendance));
+          localStorage.setItem(`yati_magang_attendance_${currentUser}`, JSON.stringify(firestoreData.attendance || []));
           localStorage.setItem(`yati_magang_office_loc_${currentUser}`, JSON.stringify(firestoreData.officeLoc || DEFAULT_OFFICE));
         } else {
           // Fallback to local storage migration if document doesn't exist on Firestore
@@ -165,8 +152,6 @@ export default function App() {
 
           const savedAttendanceStr = localStorage.getItem(`yati_magang_attendance_${currentUser}`);
           const currentAttendance = savedAttendanceStr ? JSON.parse(savedAttendanceStr) : [];
-          // Auto-heal local storage attendance photos on migration
-          const cleanAttendance = await autoHealAttendancePhotos(currentAttendance);
 
           const savedOfficeStr = localStorage.getItem(`yati_magang_office_loc_${currentUser}`);
           const currentOffice = savedOfficeStr ? JSON.parse(savedOfficeStr) : DEFAULT_OFFICE;
@@ -174,7 +159,7 @@ export default function App() {
           setLogs(currentLogs);
           setInfo(currentInfo);
           setNotifSettings(currentNotif);
-          setAttendance(cleanAttendance);
+          setAttendance(currentAttendance);
           setOfficeLoc(currentOffice);
 
           // Write initial payload to Firestore
@@ -182,7 +167,7 @@ export default function App() {
             logs: currentLogs,
             info: currentInfo,
             notifSettings: currentNotif,
-            attendance: cleanAttendance,
+            attendance: currentAttendance,
             officeLoc: currentOffice
           });
         }
@@ -202,15 +187,13 @@ export default function App() {
         setNotifSettings(savedNotif ? JSON.parse(savedNotif) : INITIAL_NOTIF_SETTINGS);
 
         const savedAttendance = localStorage.getItem(`yati_magang_attendance_${currentUser}`);
-        const parsedAttendance = savedAttendance ? JSON.parse(savedAttendance) : [];
-        const cleanAttendance = await autoHealAttendancePhotos(parsedAttendance);
-        setAttendance(cleanAttendance);
+        setAttendance(savedAttendance ? JSON.parse(savedAttendance) : []);
 
         const savedOffice = localStorage.getItem(`yati_magang_office_loc_${currentUser}`);
         setOfficeLoc(savedOffice ? JSON.parse(savedOffice) : DEFAULT_OFFICE);
       } finally {
         if (active) {
-          setIsFetchedFromFirestore(true);
+          isFetchedFromFirestoreRef.current = true;
           setIsSyncing(false);
         }
       }
@@ -225,7 +208,7 @@ export default function App() {
 
   // 4. Save state back to local cache & Sync to Firestore (Debounced to optimize writes)
   useEffect(() => {
-    if (!currentUser || !isFetchedFromFirestore) return;
+    if (!currentUser) return;
     
     // Always save to local cache instantly for instant offline fallback
     localStorage.setItem(`yati_magang_logs_${currentUser}`, JSON.stringify(logs));
@@ -235,24 +218,26 @@ export default function App() {
     localStorage.setItem(`yati_magang_office_loc_${currentUser}`, JSON.stringify(officeLoc));
 
     // Debounced Firestore upload
-    const timer = setTimeout(async () => {
-      setIsSyncing(true);
-      setSyncError(false);
-      const success = await saveFirestoreUserData(currentUser, {
-        logs,
-        info,
-        notifSettings,
-        attendance,
-        officeLoc
-      });
-      if (!success) {
-        setSyncError(true);
-      }
-      setIsSyncing(false);
-    }, 1000); // 1-second debounce window
+    if (isFetchedFromFirestoreRef.current) {
+      const timer = setTimeout(async () => {
+        setIsSyncing(true);
+        setSyncError(false);
+        const success = await saveFirestoreUserData(currentUser, {
+          logs,
+          info,
+          notifSettings,
+          attendance,
+          officeLoc
+        });
+        if (!success) {
+          setSyncError(true);
+        }
+        setIsSyncing(false);
+      }, 1000); // 1-second debounce window
 
-    return () => clearTimeout(timer);
-  }, [logs, info, notifSettings, attendance, officeLoc, currentUser, isFetchedFromFirestore]);
+      return () => clearTimeout(timer);
+    }
+  }, [logs, info, notifSettings, attendance, officeLoc, currentUser]);
 
   // 3. Background timer check for notifications (every 30 seconds)
   useEffect(() => {
@@ -352,17 +337,10 @@ export default function App() {
     return <AuthScreen onLoginSuccess={(username) => setCurrentUser(username)} />;
   }
 
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
   const handleLogout = () => {
     localStorage.removeItem('yati_magang_active_username');
     setCurrentUser(null);
     setActiveTab('dashboard');
-    setShowLogoutConfirm(false);
-  };
-
-  const handleLogoutTrigger = () => {
-    setShowLogoutConfirm(true);
   };
 
   return (
@@ -499,7 +477,7 @@ export default function App() {
               <div className="h-5 w-[1px] bg-gray-150 mx-1"></div>
               
               <button
-                onClick={handleLogoutTrigger}
+                onClick={handleLogout}
                 title="Keluar Akun"
                 className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
               >
@@ -566,7 +544,7 @@ export default function App() {
               onUpdateInfo={setInfo}
               onImportLogs={handleImportData}
               onClearLogs={handleClearData}
-              onLogout={handleLogoutTrigger}
+              onLogout={handleLogout}
             />
           )}
         </div>
@@ -636,50 +614,6 @@ export default function App() {
           </div>
         </div>
       </footer>
-
-      {/* 6. Custom Logout Confirmation Dialog */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div
-            onClick={() => setShowLogoutConfirm(false)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-300 animate-fadeIn"
-          />
-
-          {/* Modal Body */}
-          <div
-            className="relative w-full max-w-sm bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-100 flex flex-col items-center text-center z-10 animate-fadeIn"
-          >
-            {/* Decorative Warning Icon Container */}
-            <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 mb-5">
-              <LogOut className="w-6 h-6" />
-            </div>
-
-            <h3 className="text-lg font-bold text-gray-900 tracking-tight">Keluar dari Akun?</h3>
-            <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-              Apakah Anda yakin ingin keluar? Semua data logbook Anda saat ini telah tersinkronisasi dengan aman di Cloud.
-            </p>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 w-full mt-6">
-              <button
-                type="button"
-                onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-3 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all cursor-pointer border border-gray-100"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="flex-1 py-3 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 active:bg-rose-700 rounded-xl transition-all cursor-pointer shadow-lg shadow-rose-600/15"
-              >
-                Ya, Keluar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
