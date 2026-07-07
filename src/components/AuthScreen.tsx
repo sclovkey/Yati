@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { User, Lock, ArrowRight, UserPlus, LogIn, GraduationCap, Building, Award, AlertCircle } from 'lucide-react';
+import { User, Lock, ArrowRight, UserPlus, LogIn, GraduationCap, Building, Award, AlertCircle, Loader2 } from 'lucide-react';
+import { getFirestoreUser, createFirestoreUser } from '../lib/dbService';
 
 interface AuthScreenProps {
   onLoginSuccess: (username: string) => void;
@@ -21,8 +22,9 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -32,25 +34,88 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
     }
 
     const trimmedUsername = username.trim().toLowerCase();
-    const users = JSON.parse(localStorage.getItem('yati_magang_users') || '[]');
-    const user = users.find((u: any) => u.username === trimmedUsername);
+    setIsPending(true);
 
-    if (!user) {
-      setError('Username tidak terdaftar. Silakan daftar terlebih dahulu.');
-      return;
+    try {
+      // 1. Check in Firestore database first
+      const firestoreUser = await getFirestoreUser(trimmedUsername);
+      if (firestoreUser) {
+        if (firestoreUser.password !== password) {
+          setError('Password yang Anda masukkan salah.');
+          setIsPending(false);
+          return;
+        }
+
+        // Keep local user list in sync/cached
+        const localUsers = JSON.parse(localStorage.getItem('yati_magang_users') || '[]');
+        const localIndex = localUsers.findIndex((u: any) => u.username === trimmedUsername);
+        const updatedLocalUser = {
+          username: trimmedUsername,
+          password: firestoreUser.password,
+          studentName: firestoreUser.studentName,
+          institution: firestoreUser.institution,
+          companyName: firestoreUser.companyName,
+          position: firestoreUser.position,
+          mentorName: firestoreUser.mentorName
+        };
+
+        if (localIndex > -1) {
+          localUsers[localIndex] = updatedLocalUser;
+        } else {
+          localUsers.push(updatedLocalUser);
+        }
+        localStorage.setItem('yati_magang_users', JSON.stringify(localUsers));
+
+        // Success login
+        localStorage.setItem('yati_magang_active_username', trimmedUsername);
+        setIsPending(false);
+        onLoginSuccess(trimmedUsername);
+        return;
+      }
+
+      // 2. Fallback to local storage (legacy compatibility)
+      const users = JSON.parse(localStorage.getItem('yati_magang_users') || '[]');
+      const user = users.find((u: any) => u.username === trimmedUsername);
+
+      if (!user) {
+        setError('Username tidak terdaftar di database. Silakan daftar terlebih dahulu.');
+        setIsPending(false);
+        return;
+      }
+
+      if (user.password !== password) {
+        setError('Password yang Anda masukkan salah.');
+        setIsPending(false);
+        return;
+      }
+
+      // Since they exist locally but not in Firestore, we should register them on Firestore automatically!
+      try {
+        await createFirestoreUser({
+          username: trimmedUsername,
+          password: user.password,
+          studentName: user.studentName || trimmedUsername,
+          institution: user.institution || '',
+          companyName: user.companyName || 'Bank Kalsel Kantor Pusat',
+          position: user.position || 'Staf IT Developer Intern',
+          mentorName: user.mentorName || 'Akhmad Fauzi, S.Kom'
+        });
+      } catch (fErr) {
+        console.warn('Auto-migrating legacy user to Firestore warning:', fErr);
+      }
+
+      // Success login
+      localStorage.setItem('yati_magang_active_username', trimmedUsername);
+      setIsPending(false);
+      onLoginSuccess(trimmedUsername);
+    } catch (err: any) {
+      console.error(err);
+      setError('Terjadi kesalahan koneksi saat masuk. Silakan coba lagi.');
+      setIsPending(false);
     }
-
-    if (user.password !== password) {
-      setError('Password yang Anda masukkan salah.');
-      return;
-    }
-
-    // Success login
-    localStorage.setItem('yati_magang_active_username', trimmedUsername);
-    onLoginSuccess(trimmedUsername);
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -77,48 +142,63 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
       return;
     }
 
-    const users = JSON.parse(localStorage.getItem('yati_magang_users') || '[]');
-    const isExist = users.some((u: any) => u.username === trimmedUsername);
+    setIsPending(true);
 
-    if (isExist) {
-      setError('Username sudah digunakan oleh pengguna lain.');
-      return;
+    try {
+      // 1. Check if user already exists in Firestore database
+      const existingUser = await getFirestoreUser(trimmedUsername);
+      const users = JSON.parse(localStorage.getItem('yati_magang_users') || '[]');
+      const localExists = users.some((u: any) => u.username === trimmedUsername);
+
+      if (existingUser || localExists) {
+        setError('Username sudah digunakan oleh pengguna lain.');
+        setIsPending(false);
+        return;
+      }
+
+      const newUser = {
+        username: trimmedUsername,
+        password,
+        studentName: studentName.trim(),
+        institution: institution.trim(),
+        companyName: companyName.trim(),
+        position: position.trim(),
+        mentorName: mentorName.trim(),
+      };
+
+      // 2. Save in Firestore first
+      await createFirestoreUser(newUser);
+
+      // 3. Save in local storage (cache)
+      users.push(newUser);
+      localStorage.setItem('yati_magang_users', JSON.stringify(users));
+
+      // Seed initial info for this new user directly to match key format
+      const initialInfo = {
+        studentName: newUser.studentName,
+        institution: newUser.institution,
+        companyName: newUser.companyName,
+        startDate: new Date(Date.now() - 24 * 60 * 60 * 1000 * 30).toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 24 * 60 * 60 * 1000 * 60).toISOString().split('T')[0],
+        position: newUser.position,
+        mentorName: newUser.mentorName
+      };
+      localStorage.setItem(`yati_magang_info_${trimmedUsername}`, JSON.stringify(initialInfo));
+
+      setSuccess('Pendaftaran berhasil disimpan ke database cloud! Mengalihkan ke halaman masuk...');
+      
+      // Reset form and switch to login
+      setTimeout(() => {
+        setIsLogin(true);
+        setError(null);
+        setSuccess(null);
+        setIsPending(false);
+      }, 1500);
+    } catch (err: any) {
+      console.error(err);
+      setError('Terjadi kesalahan koneksi saat mendaftar. Silakan coba lagi.');
+      setIsPending(false);
     }
-
-    const newUser = {
-      username: trimmedUsername,
-      password,
-      studentName: studentName.trim(),
-      institution: institution.trim(),
-      companyName: companyName.trim(),
-      position: position.trim(),
-      mentorName: mentorName.trim(),
-    };
-
-    // Save newly registered user
-    users.push(newUser);
-    localStorage.setItem('yati_magang_users', JSON.stringify(users));
-
-    // Seed initial info for this new user directly to match key format
-    const initialInfo = {
-      studentName: newUser.studentName,
-      institution: newUser.institution,
-      companyName: newUser.companyName,
-      startDate: new Date(Date.now() - 24 * 60 * 60 * 1000 * 30).toISOString().split('T')[0],
-      endDate: new Date(Date.now() + 24 * 60 * 60 * 1000 * 60).toISOString().split('T')[0],
-      position: newUser.position,
-      mentorName: newUser.mentorName
-    };
-    localStorage.setItem(`yati_magang_info_${trimmedUsername}`, JSON.stringify(initialInfo));
-
-    setSuccess('Pendaftaran berhasil! Mengalihkan ke halaman masuk...');
-    
-    // Reset form and switch to login
-    setTimeout(() => {
-      setIsLogin(true);
-      setError(null);
-      setSuccess(null);
-    }, 1500);
   };
 
   return (
@@ -220,10 +300,11 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                   <input
                     type="text"
                     required
+                    disabled={isPending}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Masukkan username Anda"
-                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all"
+                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -237,20 +318,31 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                   <input
                     type="password"
                     required
+                    disabled={isPending}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Masukkan password Anda"
-                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all"
+                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 bg-gray-900 text-white rounded-2xl text-xs font-bold hover:bg-gray-850 active:scale-98 transition-all shadow-md shadow-gray-900/10 cursor-pointer mt-2"
+                disabled={isPending}
+                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 bg-gray-900 text-white rounded-2xl text-xs font-bold hover:bg-gray-850 active:scale-98 transition-all shadow-md shadow-gray-900/10 cursor-pointer mt-2 disabled:opacity-75 disabled:cursor-not-allowed"
               >
-                Masuk ke Aplikasi
-                <ArrowRight className="w-4 h-4" />
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Memproses Masuk...
+                  </>
+                ) : (
+                  <>
+                    Masuk ke Aplikasi
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           ) : (
@@ -265,10 +357,11 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                   <input
                     type="text"
                     required
+                    disabled={isPending}
                     value={username}
                     onChange={(e) => setUsername(e.target.value.replace(/\s+/g, ''))}
                     placeholder="Pilih username unik (tanpa spasi)"
-                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all"
+                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -283,10 +376,11 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                     <input
                       type="password"
                       required
+                      disabled={isPending}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Min. 4 karakter"
-                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all"
+                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -300,10 +394,11 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                     <input
                       type="password"
                       required
+                      disabled={isPending}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Ulangi password"
-                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all"
+                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -318,10 +413,11 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                   <input
                     type="text"
                     required
+                    disabled={isPending}
                     value={studentName}
                     onChange={(e) => setStudentName(e.target.value)}
                     placeholder="Contoh: Yati Amalia"
-                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all"
+                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -335,10 +431,11 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                   <input
                     type="text"
                     required
+                    disabled={isPending}
                     value={institution}
                     onChange={(e) => setInstitution(e.target.value)}
                     placeholder="Contoh: Universitas Lambung Mangkurat"
-                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all"
+                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -352,10 +449,11 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                     </div>
                     <input
                       type="text"
+                      disabled={isPending}
                       value={position}
                       onChange={(e) => setPosition(e.target.value)}
                       placeholder="Contoh: Staf IT Developer Intern"
-                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all"
+                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -369,10 +467,11 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                     <input
                       type="text"
                       required
+                      disabled={isPending}
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       placeholder="Contoh: Bank Kalsel Kantor Pusat"
-                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all"
+                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -380,17 +479,27 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
 
               <button
                 type="submit"
-                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 bg-gray-900 text-white rounded-2xl text-xs font-bold hover:bg-gray-850 active:scale-98 transition-all shadow-md shadow-gray-900/10 cursor-pointer mt-4"
+                disabled={isPending}
+                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 bg-gray-900 text-white rounded-2xl text-xs font-bold hover:bg-gray-850 active:scale-98 transition-all shadow-md shadow-gray-900/10 cursor-pointer mt-4 disabled:opacity-75 disabled:cursor-not-allowed"
               >
-                Mendaftar Sekarang
-                <ArrowRight className="w-4 h-4" />
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Memproses Pendaftaran...
+                  </>
+                ) : (
+                  <>
+                    Mendaftar Sekarang
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           )}
 
           <div className="mt-6 text-center">
             <p className="text-[10px] text-gray-400 leading-relaxed">
-              * Data pendaftaran disimpan secara offline di browser Anda. Tidak ada data yang dikirim ke server luar, menjaga privasi data Anda tetap aman.
+              * Data pendaftaran disimpan secara aman di database cloud (Firestore) sehingga Anda dapat masuk dari perangkat mana pun (seperti HP) secara otomatis.
             </p>
           </div>
 

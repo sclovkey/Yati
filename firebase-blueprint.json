@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile containing login credentials and internship information",
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "description": "Unique username of the user"
+        },
+        "password": {
+          "type": "string",
+          "description": "Password of the user"
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Full name of the student"
+        },
+        "institution": {
+          "type": "string",
+          "description": "College/University name"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Internship company name"
+        },
+        "position": {
+          "type": "string",
+          "description": "Internship position"
+        },
+        "mentorName": {
+          "type": "string",
+          "description": "Name of the mentor"
+        }
+      },
+      "required": ["username", "studentName", "institution"]
+    },
+    "UserDataPayload": {
+      "title": "UserDataPayload",
+      "description": "Full package of user data including logs, attendance, and settings",
+      "type": "object",
+      "properties": {
+        "logs": {
+          "type": "array",
+          "description": "Array of internship daily log entries"
+        },
+        "info": {
+          "type": "object",
+          "description": "Internship details"
+        },
+        "notifSettings": {
+          "type": "object",
+          "description": "Settings for reminders and notifications"
+        },
+        "attendance": {
+          "type": "array",
+          "description": "Attendance clock-in/out records"
+        },
+        "officeLoc": {
+          "type": "object",
+          "description": "Coordinates and configuration for office geofencing"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{username}": {
+      "schema": "UserProfile",
+      "description": "Collection of all registered internship users"
+    },
+    "/userData/{username}": {
+      "schema": "UserDataPayload",
+      "description": "Collection containing all internship logs and attendance history for a given user"
+    }
+  }
+}

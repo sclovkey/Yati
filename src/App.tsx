@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LogEntry, InternshipInfo, NotificationSettings as SettingsType, AttendanceRecord, OfficeLocation } from './types';
 import Dashboard from './components/Dashboard';
 import LogbookForm from './components/LogbookForm';
@@ -13,6 +13,7 @@ import BackupSettings from './components/BackupSettings';
 import AttendanceSystem from './components/AttendanceSystem';
 import AuthScreen from './components/AuthScreen';
 import { checkAndTriggerReminder } from './utils/notification';
+import { getFirestoreUserData, saveFirestoreUserData } from './lib/dbService';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -24,7 +25,10 @@ import {
   X,
   FileText,
   UserCheck,
-  LogOut
+  LogOut,
+  CloudLightning,
+  Cloud,
+  CloudOff
 } from 'lucide-react';
 
 // Pre-seeded sample data for onboarding
@@ -67,6 +71,11 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'logbook' | 'tambah' | 'presensi' | 'notifikasi' | 'profil'>('dashboard');
   const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
+
+  // Firestore synchronization states
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<boolean>(false);
+  const isFetchedFromFirestoreRef = useRef(false);
   
   // In-app banner alert state for reminders
   const [inAppAlert, setInAppAlert] = useState<{ show: boolean; title: string; body: string }>({
@@ -75,109 +84,160 @@ export default function App() {
     body: ''
   });
 
-  // 3. Hydrate state whenever active user changes and migrate any anonymous data if needed
+  // 3. Hydrate state from Firestore (first choice) or fallback to local storage
   useEffect(() => {
-    if (currentUser) {
-      // Migrate anonymous data if it exists and user has no user-specific data yet
-      const userLogsStr = localStorage.getItem(`yati_magang_logs_${currentUser}`);
-      if (!userLogsStr) {
-        const anonLogs = localStorage.getItem('yati_magang_logs');
-        if (anonLogs && JSON.parse(anonLogs).length > 0) {
-          localStorage.setItem(`yati_magang_logs_${currentUser}`, anonLogs);
-        }
+    let active = true;
+
+    async function hydrate() {
+      if (!currentUser) {
+        setLogs([]);
+        setInfo(INITIAL_INFO);
+        setNotifSettings(INITIAL_NOTIF_SETTINGS);
+        setAttendance([]);
+        setOfficeLoc(DEFAULT_OFFICE);
+        isFetchedFromFirestoreRef.current = false;
+        return;
       }
 
-      const userAttendanceStr = localStorage.getItem(`yati_magang_attendance_${currentUser}`);
-      if (!userAttendanceStr) {
-        const anonAttendance = localStorage.getItem('yati_magang_attendance');
-        if (anonAttendance && JSON.parse(anonAttendance).length > 0) {
-          localStorage.setItem(`yati_magang_attendance_${currentUser}`, anonAttendance);
-        }
-      }
+      setIsSyncing(true);
+      setSyncError(false);
+      isFetchedFromFirestoreRef.current = false;
 
-      const userInfoStr = localStorage.getItem(`yati_magang_info_${currentUser}`);
-      if (!userInfoStr) {
-        const anonInfo = localStorage.getItem('yati_magang_info');
-        if (anonInfo) {
-          localStorage.setItem(`yati_magang_info_${currentUser}`, anonInfo);
-        }
-      }
+      try {
+        // Fetch all app data for this user from Firestore
+        const firestoreData = await getFirestoreUserData(currentUser);
+        
+        if (!active) return;
 
-      // Now fetch user-specific data
-      const savedLogs = localStorage.getItem(`yati_magang_logs_${currentUser}`);
-      setLogs(savedLogs ? JSON.parse(savedLogs) : INITIAL_LOGS);
-
-      const savedInfo = localStorage.getItem(`yati_magang_info_${currentUser}`);
-      if (savedInfo) {
-        setInfo(JSON.parse(savedInfo));
-      } else {
-        // Fallback: search in registered users table
-        const users = JSON.parse(localStorage.getItem('yati_magang_users') || '[]');
-        const matchedUser = users.find((u: any) => u.username === currentUser);
-        if (matchedUser) {
-          const seededInfo: InternshipInfo = {
-            studentName: matchedUser.studentName || currentUser,
-            institution: matchedUser.institution || 'Universitas Lambung Mangkurat',
-            companyName: 'Bank Kalsel Kantor Pusat',
-            startDate: new Date(Date.now() - 24 * 60 * 60 * 1000 * 30).toISOString().split('T')[0],
-            endDate: new Date(Date.now() + 24 * 60 * 60 * 1000 * 60).toISOString().split('T')[0],
-            position: matchedUser.position || 'Staf IT Developer Intern',
-            mentorName: matchedUser.mentorName || 'Akhmad Fauzi, S.Kom'
-          };
-          setInfo(seededInfo);
-          localStorage.setItem(`yati_magang_info_${currentUser}`, JSON.stringify(seededInfo));
+        if (firestoreData) {
+          if (firestoreData.logs) setLogs(firestoreData.logs);
+          if (firestoreData.info) setInfo(firestoreData.info);
+          if (firestoreData.notifSettings) setNotifSettings(firestoreData.notifSettings);
+          if (firestoreData.attendance) setAttendance(firestoreData.attendance);
+          if (firestoreData.officeLoc) setOfficeLoc(firestoreData.officeLoc);
+          
+          // Seed local cache too
+          localStorage.setItem(`yati_magang_logs_${currentUser}`, JSON.stringify(firestoreData.logs || []));
+          localStorage.setItem(`yati_magang_info_${currentUser}`, JSON.stringify(firestoreData.info || INITIAL_INFO));
+          localStorage.setItem(`yati_magang_notif_settings_${currentUser}`, JSON.stringify(firestoreData.notifSettings || INITIAL_NOTIF_SETTINGS));
+          localStorage.setItem(`yati_magang_attendance_${currentUser}`, JSON.stringify(firestoreData.attendance || []));
+          localStorage.setItem(`yati_magang_office_loc_${currentUser}`, JSON.stringify(firestoreData.officeLoc || DEFAULT_OFFICE));
         } else {
-          setInfo(INITIAL_INFO);
+          // Fallback to local storage migration if document doesn't exist on Firestore
+          const savedLogsStr = localStorage.getItem(`yati_magang_logs_${currentUser}`);
+          const currentLogs = savedLogsStr ? JSON.parse(savedLogsStr) : INITIAL_LOGS;
+
+          const savedInfoStr = localStorage.getItem(`yati_magang_info_${currentUser}`);
+          let currentInfo = INITIAL_INFO;
+          if (savedInfoStr) {
+            currentInfo = JSON.parse(savedInfoStr);
+          } else {
+            const users = JSON.parse(localStorage.getItem('yati_magang_users') || '[]');
+            const matchedUser = users.find((u: any) => u.username === currentUser);
+            if (matchedUser) {
+              currentInfo = {
+                studentName: matchedUser.studentName || currentUser,
+                institution: matchedUser.institution || 'Universitas Lambung Mangkurat',
+                companyName: 'Bank Kalsel Kantor Pusat',
+                startDate: new Date(Date.now() - 24 * 60 * 60 * 1000 * 30).toISOString().split('T')[0],
+                endDate: new Date(Date.now() + 24 * 60 * 60 * 1000 * 60).toISOString().split('T')[0],
+                position: matchedUser.position || 'Staf IT Developer Intern',
+                mentorName: matchedUser.mentorName || 'Akhmad Fauzi, S.Kom'
+              };
+            }
+          }
+
+          const savedNotifStr = localStorage.getItem(`yati_magang_notif_settings_${currentUser}`);
+          const currentNotif = savedNotifStr ? JSON.parse(savedNotifStr) : INITIAL_NOTIF_SETTINGS;
+
+          const savedAttendanceStr = localStorage.getItem(`yati_magang_attendance_${currentUser}`);
+          const currentAttendance = savedAttendanceStr ? JSON.parse(savedAttendanceStr) : [];
+
+          const savedOfficeStr = localStorage.getItem(`yati_magang_office_loc_${currentUser}`);
+          const currentOffice = savedOfficeStr ? JSON.parse(savedOfficeStr) : DEFAULT_OFFICE;
+
+          setLogs(currentLogs);
+          setInfo(currentInfo);
+          setNotifSettings(currentNotif);
+          setAttendance(currentAttendance);
+          setOfficeLoc(currentOffice);
+
+          // Write initial payload to Firestore
+          await saveFirestoreUserData(currentUser, {
+            logs: currentLogs,
+            info: currentInfo,
+            notifSettings: currentNotif,
+            attendance: currentAttendance,
+            officeLoc: currentOffice
+          });
+        }
+      } catch (err) {
+        console.error("Hydration error:", err);
+        setSyncError(true);
+        
+        // Fallback to local storage in case of total offline/network errors
+        if (!active) return;
+        const savedLogs = localStorage.getItem(`yati_magang_logs_${currentUser}`);
+        setLogs(savedLogs ? JSON.parse(savedLogs) : INITIAL_LOGS);
+
+        const savedInfo = localStorage.getItem(`yati_magang_info_${currentUser}`);
+        if (savedInfo) setInfo(JSON.parse(savedInfo));
+
+        const savedNotif = localStorage.getItem(`yati_magang_notif_settings_${currentUser}`);
+        setNotifSettings(savedNotif ? JSON.parse(savedNotif) : INITIAL_NOTIF_SETTINGS);
+
+        const savedAttendance = localStorage.getItem(`yati_magang_attendance_${currentUser}`);
+        setAttendance(savedAttendance ? JSON.parse(savedAttendance) : []);
+
+        const savedOffice = localStorage.getItem(`yati_magang_office_loc_${currentUser}`);
+        setOfficeLoc(savedOffice ? JSON.parse(savedOffice) : DEFAULT_OFFICE);
+      } finally {
+        if (active) {
+          isFetchedFromFirestoreRef.current = true;
+          setIsSyncing(false);
         }
       }
-
-      const savedNotif = localStorage.getItem(`yati_magang_notif_settings_${currentUser}`);
-      setNotifSettings(savedNotif ? JSON.parse(savedNotif) : INITIAL_NOTIF_SETTINGS);
-
-      const savedAttendance = localStorage.getItem(`yati_magang_attendance_${currentUser}`);
-      setAttendance(savedAttendance ? JSON.parse(savedAttendance) : []);
-
-      const savedOffice = localStorage.getItem(`yati_magang_office_loc_${currentUser}`);
-      setOfficeLoc(savedOffice ? JSON.parse(savedOffice) : DEFAULT_OFFICE);
-    } else {
-      setLogs([]);
-      setInfo(INITIAL_INFO);
-      setNotifSettings(INITIAL_NOTIF_SETTINGS);
-      setAttendance([]);
-      setOfficeLoc(DEFAULT_OFFICE);
     }
+
+    hydrate();
+
+    return () => {
+      active = false;
+    };
   }, [currentUser]);
 
-  // 4. Save state back to user-specific local storage
+  // 4. Save state back to local cache & Sync to Firestore (Debounced to optimize writes)
   useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`yati_magang_logs_${currentUser}`, JSON.stringify(logs));
-    }
-  }, [logs, currentUser]);
+    if (!currentUser) return;
+    
+    // Always save to local cache instantly for instant offline fallback
+    localStorage.setItem(`yati_magang_logs_${currentUser}`, JSON.stringify(logs));
+    localStorage.setItem(`yati_magang_info_${currentUser}`, JSON.stringify(info));
+    localStorage.setItem(`yati_magang_notif_settings_${currentUser}`, JSON.stringify(notifSettings));
+    localStorage.setItem(`yati_magang_attendance_${currentUser}`, JSON.stringify(attendance));
+    localStorage.setItem(`yati_magang_office_loc_${currentUser}`, JSON.stringify(officeLoc));
 
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`yati_magang_info_${currentUser}`, JSON.stringify(info));
-    }
-  }, [info, currentUser]);
+    // Debounced Firestore upload
+    if (isFetchedFromFirestoreRef.current) {
+      const timer = setTimeout(async () => {
+        setIsSyncing(true);
+        setSyncError(false);
+        const success = await saveFirestoreUserData(currentUser, {
+          logs,
+          info,
+          notifSettings,
+          attendance,
+          officeLoc
+        });
+        if (!success) {
+          setSyncError(true);
+        }
+        setIsSyncing(false);
+      }, 1000); // 1-second debounce window
 
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`yati_magang_notif_settings_${currentUser}`, JSON.stringify(notifSettings));
+      return () => clearTimeout(timer);
     }
-  }, [notifSettings, currentUser]);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`yati_magang_attendance_${currentUser}`, JSON.stringify(attendance));
-    }
-  }, [attendance, currentUser]);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`yati_magang_office_loc_${currentUser}`, JSON.stringify(officeLoc));
-    }
-  }, [officeLoc, currentUser]);
+  }, [logs, info, notifSettings, attendance, officeLoc, currentUser]);
 
   // 3. Background timer check for notifications (every 30 seconds)
   useEffect(() => {
@@ -386,6 +446,26 @@ export default function App() {
 
             {/* Profile Quick indicator (Right) */}
             <div className="hidden sm:flex items-center gap-3">
+              {/* Syncing Status Indicator */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-50 border border-gray-100">
+                {isSyncing ? (
+                  <>
+                    <CloudLightning className="w-3.5 h-3.5 animate-pulse text-gray-500" />
+                    <span className="text-[10px] font-semibold text-gray-500">Sinkron...</span>
+                  </>
+                ) : syncError ? (
+                  <>
+                    <CloudOff className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
+                    <span className="text-[10px] font-semibold text-rose-500">Offline Caching</span>
+                  </>
+                ) : (
+                  <>
+                    <Cloud className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-[10px] font-semibold text-emerald-600">Tersinkron Cloud</span>
+                  </>
+                )}
+              </div>
+
               <div className="text-right flex flex-col">
                 <span className="text-xs font-bold text-gray-800">{info.studentName || 'Mahasiswa'}</span>
                 <span className="text-[9px] text-gray-400 font-mono">{info.institution || 'Belum diatur'}</span>
