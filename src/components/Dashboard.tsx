@@ -4,17 +4,18 @@
  */
 
 import React from 'react';
-import { LogEntry, InternshipInfo } from '../types';
-import { Calendar, Clock, Award, CheckCircle2, TrendingUp, AlertCircle, Sparkles, LogOut, ChevronRight } from 'lucide-react';
+import { LogEntry, InternshipInfo, AttendanceRecord } from '../types';
+import { Calendar, Clock, Award, CheckCircle2, TrendingUp, AlertCircle, Sparkles, LogOut, ChevronRight, UserCheck } from 'lucide-react';
 
 interface DashboardProps {
   logs: LogEntry[];
   info: InternshipInfo;
+  attendanceLogs?: AttendanceRecord[];
   onNavigateToForm: (initialDate?: string) => void;
   onNavigateToList: () => void;
 }
 
-export default function Dashboard({ logs, info, onNavigateToForm, onNavigateToList }: DashboardProps) {
+export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateToForm, onNavigateToList }: DashboardProps) {
   // 1. Calculations
   const totalDays = logs.length;
   const totalMinutes = logs.reduce((sum, log) => sum + log.minutes, 0);
@@ -30,62 +31,8 @@ export default function Dashboard({ logs, info, onNavigateToForm, onNavigateToLi
   const todayStr = new Date().toISOString().split('T')[0];
   const todayLog = logs.find(log => log.date === todayStr);
 
-  // Calculate Streak
-  const calculateStreak = (): number => {
-    if (logs.length === 0) return 0;
-    
-    // Sort unique log dates descending
-    const logDates = Array.from(new Set(logs.map(l => l.date))).sort().reverse();
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    
-    let streak = 0;
-    let checkDate = new Date(today);
-
-    // If today has no log, check if yesterday had a log to continue the streak
-    const hasToday = logDates.includes(todayStr);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-    const hasYesterday = logDates.includes(yesterdayStr);
-
-    if (!hasToday && !hasYesterday) {
-      return 0; // Streak is broken
-    }
-
-    if (!hasToday && hasYesterday) {
-      // Start checking from yesterday
-      checkDate = yesterday;
-    }
-
-    // Go backwards day by day and see if logged
-    while (true) {
-      const dateStr = checkDate.toISOString().split('T')[0];
-      const dayOfWeek = checkDate.getDay();
-      
-      // Skip weekends for streak if desired, or count all days.
-      // Usually, work days are Mon-Fri, so skipping weekend gap makes sense for internship
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        // Just go to previous day without breaking streak
-        checkDate.setDate(checkDate.getDate() - 1);
-        continue;
-      }
-
-      if (logDates.includes(dateStr)) {
-        streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
-      } else {
-        break; // Streak ends
-      }
-
-      // Safeguard to prevent infinite loop
-      if (streak > 365) break;
-    }
-
-    return streak;
-  };
-
-  const streak = calculateStreak();
+  // Calculate attendance total
+  const totalAttendance = attendanceLogs.length;
 
   // 2. Weekly minutes distribution (last 5 workdays or standard M-F this week)
   const getWeeklyDistribution = () => {
@@ -149,9 +96,9 @@ export default function Dashboard({ logs, info, onNavigateToForm, onNavigateToLi
       </div>
 
       {/* Grid Quick Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Stat 1: Total Hours */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4">
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-200 cursor-default">
           <div className="p-3 bg-gray-50 rounded-xl text-gray-600">
             <Clock className="w-5 h-5" />
           </div>
@@ -163,7 +110,7 @@ export default function Dashboard({ logs, info, onNavigateToForm, onNavigateToLi
         </div>
 
         {/* Stat 2: Total Active Days */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4">
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-200 cursor-default">
           <div className="p-3 bg-gray-50 rounded-xl text-gray-600">
             <Calendar className="w-5 h-5" />
           </div>
@@ -174,27 +121,34 @@ export default function Dashboard({ logs, info, onNavigateToForm, onNavigateToLi
           </div>
         </div>
 
-        {/* Stat 3: Streak */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4">
+        {/* Stat 3: Kehadiran */}
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-200 cursor-default">
           <div className="p-3 bg-gray-50 rounded-xl text-gray-600">
-            <Award className="w-5 h-5" />
+            <UserCheck className="w-5 h-5" />
           </div>
           <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Streak Mengisi</span>
-            <span className="text-2xl font-semibold text-gray-900">{streak} <span className="text-sm font-normal text-gray-500">Hari</span></span>
-            <span className="text-[10px] text-gray-400 block">Berturut-turut (Senen-Jumat)</span>
+            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Kehadiran</span>
+            <span className="text-2xl font-semibold text-gray-900">{totalAttendance} <span className="text-sm font-normal text-gray-500">Hari</span></span>
+            <span className="text-[10px] text-gray-400 block">Sejak awal periode magang</span>
           </div>
         </div>
 
         {/* Stat 4: Completion Rate */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4">
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-200 cursor-default">
           <div className="p-3 bg-gray-50 rounded-xl text-gray-600">
             <CheckCircle2 className="w-5 h-5" />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1.5 flex-1">
             <span className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Penyelesaian</span>
-            <span className="text-2xl font-semibold text-gray-900">{completionRate}%</span>
-            <span className="text-[10px] text-gray-400 block">{completedLogs} dari {totalDays} tugas selesai</span>
+            <span className="text-2xl font-semibold text-gray-900 block">{completionRate}%</span>
+            {/* Thin progressive progress bar */}
+            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1">
+              <div 
+                className="h-full bg-gray-900 rounded-full transition-all duration-500" 
+                style={{ width: `${completionRate}%` }}
+              ></div>
+            </div>
+            <span className="text-[10px] text-gray-400 block pt-0.5">{completedLogs} dari {totalDays} tugas selesai</span>
           </div>
         </div>
       </div>
@@ -211,7 +165,7 @@ export default function Dashboard({ logs, info, onNavigateToForm, onNavigateToLi
             </h2>
 
             {todayLog ? (
-              <div className="bg-gray-50 border border-gray-200/50 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="bg-gray-50 border border-gray-200/50 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-gray-300 transition-colors duration-200">
                 <div className="space-y-2 max-w-xl">
                   <div className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-md border border-green-100">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
@@ -227,27 +181,27 @@ export default function Dashboard({ logs, info, onNavigateToForm, onNavigateToLi
                 </div>
                 <button
                   onClick={() => onNavigateToForm(todayStr)}
-                  className="text-xs font-medium text-gray-900 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 whitespace-nowrap"
+                  className="text-xs font-medium text-gray-900 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 whitespace-nowrap cursor-pointer transition-all"
                 >
                   Edit Catatan
                 </button>
               </div>
             ) : (
-              <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center space-y-4">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto text-gray-500">
-                  <AlertCircle className="w-6 h-6" />
+              <div className="bg-gradient-to-br from-gray-50 to-white border border-dashed border-gray-300/80 rounded-2xl p-8 text-center space-y-4 hover:border-gray-400 transition-all duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto text-gray-400 border border-gray-100 shadow-xs">
+                  <Calendar className="w-7 h-7 text-gray-400" />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="font-medium text-gray-800 text-sm">Anda Belum Mengisi Logbook Hari Ini</h3>
-                  <p className="text-xs text-gray-400 max-w-md mx-auto">
-                    Segera catat pencatatan kegiatan magang Anda untuk menjaga integritas laporan dan mempertahankan streak harian Anda!
+                <div className="space-y-1 max-w-sm mx-auto">
+                  <h3 className="font-semibold text-gray-800 text-sm">Belum Ada Catatan Hari Ini</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Yuk, catat aktivitas magangmu hari ini! Pengisian teratur membantu memantau progres harian dan mempermudah ekspor laporan di akhir periode.
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigateToForm(todayStr)}
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-white bg-gray-900 hover:bg-gray-800 px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-xs"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-white bg-gray-900 hover:bg-gray-800 hover:-translate-y-0.5 active:translate-y-0 px-5 py-2.5 rounded-xl transition-all cursor-pointer shadow-xs"
                 >
-                  Isi Logbook Sekarang
+                  Mulai Isi Logbook Sekarang
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -258,35 +212,63 @@ export default function Dashboard({ logs, info, onNavigateToForm, onNavigateToLi
         {/* Column Right: Weekly hours chart & Quick Guidance */}
         <div className="space-y-6">
           {/* Weekly chart */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
+          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300">
             <div className="space-y-1 mb-6">
               <h2 className="text-base font-semibold text-gray-900">Grafik Durasi Kerja Minggu Ini</h2>
               <p className="text-[11px] text-gray-400">Distribusi durasi kerja harian dari Senin hingga Jumat</p>
             </div>
 
-            {/* Minimalist Visual Bars */}
-            <div className="flex items-end justify-between h-36 px-4 border-b border-gray-100 pb-2">
-              {weeklyData.map((data, idx) => {
-                const heightPercentage = Math.min((data.minutes / maxWeeklyMinutes) * 100, 100);
-                return (
-                  <div key={idx} className="flex flex-col items-center flex-1 group relative">
-                    {/* Tooltip on hover */}
-                    <div className="absolute bottom-full mb-2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-sm">
-                      {data.minutes > 0 ? `${data.minutes} Menit: ${data.title}` : 'Belum terisi'}
+            {/* Minimalist Visual Bars or Beautiful Empty Placeholder */}
+            {weeklyData.every(d => d.minutes === 0) ? (
+              <div className="relative h-36 flex items-center justify-center border-b border-gray-100 pb-2">
+                {/* Ghost background bars for layout placeholder */}
+                <div className="absolute inset-0 flex items-end justify-between px-4 pb-2 opacity-10 pointer-events-none">
+                  {[40, 60, 30, 80, 50].map((h, i) => (
+                    <div key={i} className="flex flex-col items-center flex-1">
+                      <div className="w-7 bg-gray-400 rounded-t-md" style={{ height: `${h}%` }}></div>
+                      <div className="w-6 h-1 bg-gray-300 mt-2 rounded"></div>
                     </div>
+                  ))}
+                </div>
+                
+                {/* Visual indicator card */}
+                <div className="z-10 text-center space-y-2 p-4 bg-white/95 backdrop-blur-xs rounded-xl shadow-xs border border-gray-100/50 max-w-[200px]">
+                  <TrendingUp className="w-5 h-5 text-gray-400 mx-auto" />
+                  <p className="text-[10px] font-medium text-gray-600 leading-normal">
+                    Belum ada data durasi kerja minggu ini.
+                  </p>
+                  <button
+                    onClick={() => onNavigateToForm()}
+                    className="text-[10px] font-extrabold text-gray-900 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    Mulai Catat →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-end justify-between h-36 px-4 border-b border-gray-100 pb-2">
+                {weeklyData.map((data, idx) => {
+                  const heightPercentage = Math.min((data.minutes / maxWeeklyMinutes) * 100, 100);
+                  return (
+                    <div key={idx} className="flex flex-col items-center flex-1 group relative">
+                      {/* Tooltip on hover */}
+                      <div className="absolute bottom-full mb-2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-sm z-20">
+                        {data.minutes > 0 ? `${data.minutes} Menit: ${data.title}` : 'Belum terisi'}
+                      </div>
 
-                    <div className="w-7 bg-gray-100 rounded-t-md overflow-hidden h-28 flex items-end">
-                      <div 
-                        className={`w-full transition-all duration-500 rounded-t-md ${data.minutes > 0 ? 'bg-gray-900' : 'bg-gray-200'}`}
-                        style={{ height: `${heightPercentage}%` }}
-                      ></div>
+                      <div className="w-7 bg-gray-100 rounded-t-md overflow-hidden h-28 flex items-end">
+                        <div 
+                          className={`w-full transition-all duration-500 rounded-t-md ${data.minutes > 0 ? 'bg-gray-900' : 'bg-gray-200'}`}
+                          style={{ height: `${heightPercentage}%` }}
+                        ></div>
+                      </div>
+                      
+                      <span className="text-[10px] text-gray-400 font-medium mt-2">{data.day.substring(0, 3)}</span>
                     </div>
-                    
-                    <span className="text-[10px] text-gray-400 font-medium mt-2">{data.day.substring(0, 3)}</span>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="flex justify-between items-center mt-4 text-[11px] text-gray-400 px-2">
               <span>Total Minggu Ini: <strong>{weeklyData.reduce((sum, d) => sum + d.minutes, 0)} Menit</strong></span>
@@ -294,28 +276,7 @@ export default function Dashboard({ logs, info, onNavigateToForm, onNavigateToLi
             </div>
           </div>
 
-          {/* Clean Guidance card */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs space-y-4">
-            <h3 className="font-semibold text-gray-900 text-sm">Petunjuk Pengisian Logbook</h3>
-            <ul className="text-xs text-gray-500 space-y-2.5">
-              <li className="flex gap-2">
-                <span className="font-mono text-gray-400 font-bold">01.</span>
-                <span>Catat setiap kegiatan magang secara jujur dan berikan deskripsi yang cukup jelas.</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-mono text-gray-400 font-bold">02.</span>
-                <span>Masukkan durasi waktu pengerjaan dalam satuan menit agar kalkulasi durasi terekam akurat.</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-mono text-gray-400 font-bold">03.</span>
-                <span>Aktifkan notifikasi pengingat harian agar Anda tidak lupa mengisi di jam kepulangan kantor.</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-mono text-gray-400 font-bold">04.</span>
-                <span>Gunakan menu <strong>Ekspor Data</strong> di akhir minggu atau bulan untuk mencetak logbook resmi dalam format Excel atau PDF bertandatangan.</span>
-              </li>
-            </ul>
-          </div>
+
         </div>
       </div>
     </div>

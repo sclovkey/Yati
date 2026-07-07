@@ -17,14 +17,16 @@ export interface LogEntry {
 export interface AttendanceRecord {
   id: string;
   date: string; // Format: YYYY-MM-DD
-  clockInTime: string; // Format: HH:MM:SS
-  clockInPhoto: string; // base64 image data url
-  clockInCoords: { latitude: number; longitude: number };
-  clockInDistance: number; // distance in meters from office
+  clockInTime?: string; // Format: HH:MM:SS
+  clockInPhoto?: string; // base64 image data url
+  clockInCoords?: { latitude: number; longitude: number };
+  clockInDistance?: number; // distance in meters from office
   clockOutTime?: string; // Format: HH:MM:SS
   clockOutPhoto?: string; // base64 image data url
   clockOutCoords?: { latitude: number; longitude: number };
   clockOutDistance?: number; // distance in meters from office
+  status?: 'Hadir' | 'Sakit' | 'Izin';
+  notes?: string; // Alasan sakit atau izin
 }
 
 export interface OfficeLocation {

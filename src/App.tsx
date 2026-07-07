@@ -281,7 +281,7 @@ export default function App() {
                 }`}
               >
                 <LayoutDashboard className="w-3.5 h-3.5" />
-                Ringkasan
+                Dashboard
               </button>
 
               <button
@@ -292,16 +292,6 @@ export default function App() {
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 Catatan Logbook
-              </button>
-
-              <button
-                onClick={() => handleQuickAdd()}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'tambah' && !editingLog ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
-                }`}
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                Tambah Log
               </button>
 
               <button
@@ -357,6 +347,7 @@ export default function App() {
             <Dashboard 
               logs={logs} 
               info={info} 
+              attendanceLogs={attendance}
               onNavigateToForm={handleQuickAdd}
               onNavigateToList={() => setActiveTab('logbook')}
             />
@@ -410,8 +401,8 @@ export default function App() {
         </div>
       </main>
 
-      {/* 4. Mobile Bottom Toolbar (Sticky Bottom for Handphone access) */}
-      <div className="md:hidden sticky bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-2.5 z-45 flex items-center justify-around shadow-lg">
+      {/* 4. Mobile Bottom Toolbar (Fixed Bottom for Handphone access) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-50 flex items-center justify-around shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
         <button
           onClick={() => { setActiveTab('dashboard'); setEditingLog(null); }}
           className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${
@@ -430,16 +421,6 @@ export default function App() {
         >
           <BookOpen className="w-5 h-5" />
           <span className="text-[10px]">Logbook</span>
-        </button>
-
-        <button
-          onClick={() => handleQuickAdd()}
-          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${
-            activeTab === 'tambah' && !editingLog ? 'text-gray-900 font-semibold' : 'text-gray-400 hover:text-gray-600'
-          }`}
-        >
-          <PlusCircle className="w-5 h-5" />
-          <span className="text-[10px]">Tambah</span>
         </button>
 
         <button

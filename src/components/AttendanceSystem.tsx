@@ -75,6 +75,12 @@ export default function AttendanceSystem({
   const [tempRadius, setTempRadius] = useState(officeLoc.radius.toString());
   const [tempName, setTempName] = useState(officeLoc.name);
 
+  // State for Sakit/Izin
+  const [presenceTab, setPresenceTab] = useState<'hadir' | 'nonHadir'>('hadir');
+  const [nonPresenceType, setNonPresenceType] = useState<'Sakit' | 'Izin'>('Sakit');
+  const [nonPresenceReason, setNonPresenceReason] = useState('');
+  const [nonPresencePhoto, setNonPresencePhoto] = useState<string | null>(null);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -87,7 +93,7 @@ export default function AttendanceSystem({
         node.play().catch(err => {
           console.warn("Autoplay video failed, attempting muted play:", err);
           node.muted = true;
-          node.play().catch(pErr => console.error("Muted play also failed:", pErr));
+          node.play().catch(pErr => console.warn("Muted play also failed:", pErr));
         });
       }
     } else {
@@ -183,16 +189,45 @@ export default function AttendanceSystem({
         streamRef.current.getTracks().forEach(track => track.stop());
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' }, 
-        audio: false 
-      });
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('API Kamera tidak didukung di browser ini.');
+      }
+
+      let stream;
+      try {
+        // Try standard selfie/user facing mode
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user' }, 
+          audio: false 
+        });
+      } catch (firstErr) {
+        console.warn('Failed with strict facingMode, trying ideal facingMode', firstErr);
+        try {
+          // Try ideal facing mode
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: { ideal: 'user' } }, 
+            audio: false 
+          });
+        } catch (secondErr) {
+          console.warn('Failed with ideal facingMode, trying generic video', secondErr);
+          // Try generic any video input
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: true, 
+            audio: false 
+          });
+        }
+      }
       
       streamRef.current = stream;
       setCameraActive(true);
     } catch (err: any) {
-      console.error('Camera access error:', err);
-      setCameraError('Gagal mengakses kamera langsung. Silakan pastikan Anda mengizinkan akses kamera pada browser Anda.');
+      console.warn('Camera access (non-fatal warning):', err);
+      const isDeviceNotFound = err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError' || err.message?.includes('not found');
+      if (isDeviceNotFound) {
+        setCameraError('Kamera tidak ditemukan pada perangkat Anda. Silakan gunakan opsi unggah manual di bawah.');
+      } else {
+        setCameraError('Gagal mengakses kamera langsung. Silakan pastikan Anda mengizinkan akses kamera pada browser Anda atau gunakan tombol unggah foto di bawah.');
+      }
     }
   };
 
@@ -206,12 +241,12 @@ export default function AttendanceSystem({
   };
 
   // Automatically activate camera on mount or when photo is cleared/reset
-  const hasClockedOut = todayRecord ? !!todayRecord.clockOutTime : false;
+  const hasClockedOut = todayRecord ? (todayRecord.status === 'Sakit' || todayRecord.status === 'Izin' || !!todayRecord.clockOutTime) : false;
   const hasPhoto = !!capturedPhoto;
 
   useEffect(() => {
-    if (!hasClockedOut) {
-      if (!hasPhoto && !cameraActive) {
+    if (!hasClockedOut && presenceTab === 'hadir') {
+      if (!hasPhoto && !cameraActive && !cameraError) {
         startCamera();
       }
     } else {
@@ -219,7 +254,7 @@ export default function AttendanceSystem({
         stopCamera();
       }
     }
-  }, [hasClockedOut, hasPhoto, cameraActive]);
+  }, [hasClockedOut, hasPhoto, cameraActive, cameraError, presenceTab]);
 
   // Cleanup camera stream on unmount
   useEffect(() => {
@@ -258,6 +293,29 @@ export default function AttendanceSystem({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Submit Sakit / Izin handler
+  const handleNonPresenceSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nonPresenceReason.trim()) {
+      alert('Harap masukkan alasan ketidakhadiran.');
+      return;
+    }
+
+    const newRecord: AttendanceRecord = {
+      id: 'att_' + Date.now(),
+      date: todayStr,
+      status: nonPresenceType,
+      notes: nonPresenceReason,
+      clockInPhoto: nonPresencePhoto || undefined, // can attach doctor note or proof image
+      clockInTime: '--:--:--', // placeholder text
+    };
+
+    onSaveAttendance(newRecord);
+    // Reset form states
+    setNonPresenceReason('');
+    setNonPresencePhoto(null);
   };
 
   // Check In handler
@@ -412,16 +470,24 @@ export default function AttendanceSystem({
           year: 'numeric'
         });
 
+        const isSakitOrIzin = log.status === 'Sakit' || log.status === 'Izin';
+        let statusText = log.clockOutTime ? 'Selesai' : 'Sedang Kerja';
+        if (log.status === 'Sakit') {
+          statusText = `Sakit: ${log.notes || '-'}`;
+        } else if (log.status === 'Izin') {
+          statusText = `Izin: ${log.notes || '-'}`;
+        }
+
         return [
           (index + 1).toString(),
           dayFormat,
           '', // clockInPhoto placeholder
-          log.clockInTime,
-          `${log.clockInDistance} m`,
+          isSakitOrIzin ? '-' : (log.clockInTime || '-'),
+          isSakitOrIzin ? '-' : (log.clockInDistance !== undefined ? `${log.clockInDistance} m` : '-'),
           '', // clockOutPhoto placeholder
-          log.clockOutTime || '--:--:--',
-          log.clockOutDistance !== undefined ? `${log.clockOutDistance} m` : '-',
-          log.clockOutTime ? 'Selesai' : 'Sedang Kerja'
+          isSakitOrIzin ? '-' : (log.clockOutTime || '--:--:--'),
+          isSakitOrIzin ? '-' : (log.clockOutDistance !== undefined ? `${log.clockOutDistance} m` : '-'),
+          statusText
         ];
       });
 
@@ -629,7 +695,11 @@ export default function AttendanceSystem({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Column 1: Attendance Action Center */}
-        <div className="lg:col-span-7 bg-white border border-gray-100 rounded-2xl p-6 shadow-xs flex flex-col space-y-6">
+        <div className={`${
+          (presenceTab === 'nonHadir' || todayRecord?.status === 'Sakit' || todayRecord?.status === 'Izin')
+            ? 'lg:col-span-12' 
+            : 'lg:col-span-7'
+        } bg-white border border-gray-100 rounded-2xl p-6 shadow-xs flex flex-col space-y-6`}>
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-gray-900 text-base flex items-center gap-2">
               <Clock className="w-4 h-4 text-gray-500" />
@@ -643,20 +713,70 @@ export default function AttendanceSystem({
 
           {/* Status Badge Indicator */}
           {todayRecord ? (
-            todayRecord.clockInTime && todayRecord.clockOutTime ? (
+            todayRecord.status === 'Sakit' ? (
+              <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex justify-between items-start gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 mt-0.5">
+                    <AlertCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-rose-800 font-sans">Keterangan Hari Ini: Sakit</h4>
+                    <p className="text-[11px] text-rose-600 mt-0.5 font-sans leading-relaxed">Alasan: {todayRecord.notes || '-'}</p>
+                    {todayRecord.clockInPhoto && (
+                      <div className="mt-2">
+                        <span className="text-[10px] text-rose-500 block mb-1">Lampiran Bukti:</span>
+                        <img src={todayRecord.clockInPhoto} alt="Surat Dokter" className="w-20 h-20 rounded-lg object-cover border border-rose-200" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onDeleteAttendance(todayRecord.id)}
+                  className="text-[10px] font-bold text-rose-700 hover:underline cursor-pointer"
+                >
+                  Batalkan
+                </button>
+              </div>
+            ) : todayRecord.status === 'Izin' ? (
+              <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex justify-between items-start gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 shrink-0 mt-0.5">
+                    <AlertCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-amber-800 font-sans">Keterangan Hari Ini: Izin</h4>
+                    <p className="text-[11px] text-amber-600 mt-0.5 font-sans leading-relaxed">Alasan: {todayRecord.notes || '-'}</p>
+                    {todayRecord.clockInPhoto && (
+                      <div className="mt-2">
+                        <span className="text-[10px] text-amber-500 block mb-1">Lampiran Bukti:</span>
+                        <img src={todayRecord.clockInPhoto} alt="Surat Izin" className="w-20 h-20 rounded-lg object-cover border border-amber-200" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onDeleteAttendance(todayRecord.id)}
+                  className="text-[10px] font-bold text-amber-700 hover:underline cursor-pointer"
+                >
+                  Batalkan
+                </button>
+              </div>
+            ) : todayRecord.clockInTime && todayRecord.clockOutTime ? (
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-emerald-800">Presensi Hari Ini Selesai</h4>
-                  <p className="text-[11px] text-emerald-600 mt-1">Anda sudah melakukan pencatatan jam masuk ({todayRecord.clockInTime}) dan jam pulang ({todayRecord.clockOutTime}) untuk hari ini.</p>
+                  <h4 className="text-xs font-bold text-emerald-800 font-sans">Presensi Hari Ini Selesai</h4>
+                  <p className="text-[11px] text-emerald-600 mt-1 font-sans">Anda sudah melakukan pencatatan jam masuk ({todayRecord.clockInTime}) dan jam pulang ({todayRecord.clockOutTime}) untuk hari ini.</p>
                 </div>
               </div>
             ) : (
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
                 <LogIn className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-blue-800">Sudah Melakukan Presensi Masuk</h4>
-                  <p className="text-[11px] text-blue-600 mt-1">Anda masuk pada pukul <strong>{todayRecord.clockInTime}</strong>. Jangan lupa untuk melakukan presensi pulang saat selesai magang.</p>
+                  <h4 className="text-xs font-bold text-blue-800 font-sans">Sudah Melakukan Presensi Masuk</h4>
+                  <p className="text-[11px] text-blue-600 mt-1 font-sans">Anda masuk pada pukul <strong>{todayRecord.clockInTime}</strong>. Jangan lupa untuk melakukan presensi pulang saat selesai magang.</p>
                 </div>
               </div>
             )
@@ -664,14 +784,131 @@ export default function AttendanceSystem({
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-bold text-amber-800">Belum Melakukan Presensi</h4>
-                <p className="text-[11px] text-amber-600 mt-1">Harap lakukan pencatatan jam masuk terlebih dahulu sebelum memulai aktivitas magang hari ini.</p>
+                <h4 className="text-xs font-bold text-amber-800 font-sans">Belum Melakukan Presensi</h4>
+                <p className="text-[11px] text-amber-600 mt-1 font-sans">Harap lakukan pencatatan jam masuk atau ajukan keterangan sakit/izin jika Anda berhalangan hadir hari ini.</p>
               </div>
             </div>
           )}
 
+          {/* Tab Selector - only show when not yet clocked-in */}
+          {!todayRecord && (
+            <div className="flex bg-gray-100 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setPresenceTab('hadir')}
+                className={`flex-1 py-2 text-center text-xs font-bold rounded-lg cursor-pointer transition-all ${
+                  presenceTab === 'hadir'
+                    ? 'bg-white text-gray-900 shadow-xs'
+                    : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                Hadir (Selfie & GPS)
+              </button>
+              <button
+                type="button"
+                onClick={() => setPresenceTab('nonHadir')}
+                className={`flex-1 py-2 text-center text-xs font-bold rounded-lg cursor-pointer transition-all ${
+                  presenceTab === 'nonHadir'
+                    ? 'bg-white text-gray-900 shadow-xs'
+                    : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                Sakit / Izin
+              </button>
+            </div>
+          )}
+
+          {/* Sakit / Izin Form View */}
+          {!todayRecord && presenceTab === 'nonHadir' && (
+            <form onSubmit={handleNonPresenceSubmit} className="space-y-4 animate-fadeIn">
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setNonPresenceType('Sakit')}
+                  className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                    nonPresenceType === 'Sakit'
+                      ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-xs'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  🤕 Sakit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNonPresenceType('Izin')}
+                  className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                    nonPresenceType === 'Izin'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-xs'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  📄 Izin / Keperluan Lain
+                </button>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+                  Alasan Keterangan
+                </label>
+                <textarea
+                  value={nonPresenceReason}
+                  onChange={(e) => setNonPresenceReason(e.target.value)}
+                  placeholder={nonPresenceType === 'Sakit' ? 'Contoh: Demam tinggi, butuh istirahat di rumah / berobat ke dokter' : 'Contoh: Ada keperluan keluarga mendesak'}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 bg-white min-h-[80px]"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+                  Lampiran Foto Surat Dokter / Bukti (Opsional)
+                </label>
+                <div className="flex gap-4 items-center">
+                  <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                    {nonPresencePhoto ? (
+                      <img src={nonPresencePhoto} alt="Attachment" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="w-5 h-5 text-gray-400" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-[10px] font-extrabold transition-all shadow-xs cursor-pointer">
+                      <Camera className="w-3.5 h-3.5 text-gray-500" />
+                      {nonPresencePhoto ? 'Ubah Foto Bukti' : 'Unggah Foto Bukti'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setNonPresencePhoto(reader.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-[9px] text-gray-400 mt-1">Format gambar JPG/PNG maks. 5MB</p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className={`w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer text-white ${
+                  nonPresenceType === 'Sakit' ? 'bg-rose-600 hover:bg-rose-700 shadow-sm' : 'bg-amber-600 hover:bg-amber-700 shadow-sm'
+                }`}
+              >
+                Kirim Keterangan {nonPresenceType}
+              </button>
+            </form>
+          )}
+
           {/* Camera Frame Module */}
-          {(!todayRecord || !todayRecord.clockOutTime) && (
+          {(!todayRecord || (!todayRecord.clockOutTime && todayRecord.status !== 'Sakit' && todayRecord.status !== 'Izin')) && (presenceTab === 'hadir' || todayRecord) && (
             <div className="space-y-3">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Foto Bukti Aktivitas / Selfie</label>
               
@@ -690,6 +927,39 @@ export default function AttendanceSystem({
                     alt="Selfie captured" 
                     className="w-full h-full object-cover"
                   />
+                ) : cameraError ? (
+                  <div className="p-6 space-y-3 z-10">
+                    <div className="w-10 h-10 bg-amber-500/20 rounded-2xl flex items-center justify-center mx-auto text-amber-400 animate-pulse">
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <h4 className="text-xs font-bold text-gray-200">Kamera Langsung Terhambat</h4>
+                    <p className="text-[10px] text-gray-400 max-w-xs mx-auto">
+                      Kamera diblokir atau tidak terdeteksi oleh browser Anda. Silakan tetap berswafoto dengan memilih opsi unggah manual di bawah:
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2 pt-1">
+                      <label className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-extrabold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+                        <Camera className="w-3.5 h-3.5" />
+                        Gunakan Kamera HP
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="user"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <label className="px-3.5 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+                        <ImageIcon className="w-3.5 h-3.5 text-gray-400" />
+                        Pilih dari Galeri
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
                 ) : (
                   <div className="p-6 space-y-2">
                     <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto text-white animate-pulse">
@@ -716,6 +986,7 @@ export default function AttendanceSystem({
                       type="button"
                       onClick={() => {
                         setCapturedPhoto(null);
+                        setCameraError(null);
                       }}
                       className="px-4 py-2 bg-gray-900/90 hover:bg-gray-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-sm shadow-sm cursor-pointer"
                     >
@@ -725,12 +996,26 @@ export default function AttendanceSystem({
                   ) : null}
                 </div>
               </div>
-              {cameraError && <p className="text-[11px] text-red-500 font-medium text-center">{cameraError}</p>}
+              {cameraError && (
+                <div className="space-y-1 text-center">
+                  <p className="text-[11px] text-red-500 font-medium">{cameraError}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCameraError(null);
+                      startCamera();
+                    }}
+                    className="text-[10px] text-gray-900 font-bold hover:underline cursor-pointer inline-flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Coba Aktifkan Kamera Lagi
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           {/* Action buttons (Clock in & out) */}
-          {(!todayRecord || !todayRecord.clockOutTime) && (
+          {(!todayRecord || (!todayRecord.clockOutTime && todayRecord.status !== 'Sakit' && todayRecord.status !== 'Izin')) && (presenceTab === 'hadir' || todayRecord) && (
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
               {!todayRecord ? (
                 <button
@@ -765,7 +1050,7 @@ export default function AttendanceSystem({
           )}
           
           {/* Geofence requirement reminder */}
-          {(!todayRecord || !todayRecord.clockOutTime) && (
+          {(!todayRecord || (!todayRecord.clockOutTime && todayRecord.status !== 'Sakit' && todayRecord.status !== 'Izin')) && (presenceTab === 'hadir' || todayRecord) && (
             <p className="text-[10px] text-gray-400 text-center leading-relaxed">
               * Tombol presensi hanya akan aktif apabila **foto telah dilampirkan** dan Anda terdeteksi berada **di dalam radius tempat kerja** ({officeLoc.radius} meter dari {officeLoc.name}).
             </p>
@@ -773,140 +1058,142 @@ export default function AttendanceSystem({
         </div>
 
         {/* Column 2: Location Status & Map View */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          
-          {/* Geolocation Status Card */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-gray-500" />
-                Status Geofencing Anda
-              </h3>
-              <button
-                type="button"
-                onClick={getGeoLocation}
-                disabled={isFetchingLocation}
-                className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-500 hover:text-gray-800 transition-colors"
-                title="Penyegaran lokasi GPS"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isFetchingLocation ? 'animate-spin text-gray-800' : ''}`} />
-              </button>
-            </div>
+        {!(presenceTab === 'nonHadir' || todayRecord?.status === 'Sakit' || todayRecord?.status === 'Izin') && (
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            
+            {/* Geolocation Status Card */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-gray-500" />
+                  Status Geofencing Anda
+                </h3>
+                <button
+                  type="button"
+                  onClick={getGeoLocation}
+                  disabled={isFetchingLocation}
+                  className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-500 hover:text-gray-800 transition-colors"
+                  title="Penyegaran lokasi GPS"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isFetchingLocation ? 'animate-spin text-gray-800' : ''}`} />
+                </button>
+              </div>
 
-            {/* Workplace summary info */}
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs space-y-1.5">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Tempat Kerja:</span>
-                <span className="font-semibold text-gray-800">{officeLoc.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Koordinat Kantor:</span>
-                <span className="font-mono text-gray-700">{officeLoc.latitude.toFixed(6)}, {officeLoc.longitude.toFixed(6)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Radius Diizinkan:</span>
-                <span className="font-semibold text-gray-800">{officeLoc.radius} Meter</span>
-              </div>
-            </div>
-
-            {/* Geolocation result */}
-            {isFetchingLocation ? (
-              <div className="py-6 flex flex-col items-center justify-center text-center gap-2">
-                <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
-                <span className="text-xs text-gray-400">Mengambil sinyal GPS presisi...</span>
-              </div>
-            ) : locationError ? (
-              <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3 text-xs text-red-700">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <h5 className="font-bold">Gagal Mengunci Lokasi</h5>
-                  <p className="text-[11px] leading-relaxed text-red-600/90">{locationError}</p>
+              {/* Workplace summary info */}
+              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Tempat Kerja:</span>
+                  <span className="font-semibold text-gray-800">{officeLoc.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Koordinat Kantor:</span>
+                  <span className="font-mono text-gray-700">{officeLoc.latitude.toFixed(6)}, {officeLoc.longitude.toFixed(6)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Radius Diizinkan:</span>
+                  <span className="font-semibold text-gray-800">{officeLoc.radius} Meter</span>
                 </div>
               </div>
-            ) : currentCoords ? (
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs space-y-1.5">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Posisi GPS Anda:</span>
-                    <span className="font-mono text-gray-700">{currentCoords.latitude.toFixed(6)}, {currentCoords.longitude.toFixed(6)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Jarak ke Kantor:</span>
-                    <span className={`font-bold text-xs ${isWithinRadius ? 'text-emerald-700' : 'text-amber-700'}`}>
-                      {distance !== null ? `${distance} Meter` : 'Menghitung...'}
-                    </span>
+
+              {/* Geolocation result */}
+              {isFetchingLocation ? (
+                <div className="py-6 flex flex-col items-center justify-center text-center gap-2">
+                  <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
+                  <span className="text-xs text-gray-400">Mengambil sinyal GPS presisi...</span>
+                </div>
+              ) : locationError ? (
+                <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3 text-xs text-red-700">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <h5 className="font-bold">Gagal Mengunci Lokasi</h5>
+                    <p className="text-[11px] leading-relaxed text-red-600/90">{locationError}</p>
                   </div>
                 </div>
-
-                {/* Radius verification badge */}
-                {isWithinRadius ? (
-                  <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-xl p-3.5 flex items-start gap-2 text-xs">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <h5 className="font-bold">Siap untuk Presensi</h5>
-                      <p className="text-[11px] text-emerald-600/90 mt-0.5">Lokasi Anda terkunci di dalam radius kerja ({distance}m). Tombol presensi telah dibuka.</p>
+              ) : currentCoords ? (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs space-y-1.5">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Posisi GPS Anda:</span>
+                      <span className="font-mono text-gray-700">{currentCoords.latitude.toFixed(6)}, {currentCoords.longitude.toFixed(6)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">Jarak ke Kantor:</span>
+                      <span className={`font-bold text-xs ${isWithinRadius ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        {distance !== null ? `${distance} Meter` : 'Menghitung...'}
+                      </span>
                     </div>
                   </div>
-                ) : (
-                  <div className="bg-amber-50 border border-amber-100 text-amber-800 rounded-xl p-3.5 flex items-start gap-2 text-xs">
-                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <h5 className="font-bold">Berada di Luar Radius</h5>
-                      <p className="text-[11px] text-amber-600/90 mt-0.5">Anda saat ini berjarak {distance}m dari titik kantor. Silakan mendekat atau sesuaikan titik koordinat kantor jika diperlukan.</p>
+
+                  {/* Radius verification badge */}
+                  {isWithinRadius ? (
+                    <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-xl p-3.5 flex items-start gap-2 text-xs">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <h5 className="font-bold">Siap untuk Presensi</h5>
+                        <p className="text-[11px] text-emerald-600/90 mt-0.5">Lokasi Anda terkunci di dalam radius kerja ({distance}m). Tombol presensi telah dibuka.</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-gray-400 text-center py-4">Tekan segarkan lokasi untuk mendapatkan GPS.</p>
-            )}
-          </div>
-
-          {/* Minimalist SVG Coordinate Map Visualization */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex flex-col items-center">
-            <h4 className="text-xs font-semibold text-gray-800 self-start mb-3 flex items-center gap-1.5">
-              <Map className="w-4 h-4 text-gray-500" />
-              Radar Jarak Lokasi Kerja
-            </h4>
-
-            {currentCoords ? (
-              <div className="w-full aspect-square max-w-[200px] relative border border-gray-100 bg-gray-50 rounded-full flex items-center justify-center p-4">
-                {/* Geofence Ring */}
-                <div className="absolute w-[120px] h-[120px] rounded-full border border-gray-300 border-dashed animate-pulse bg-gray-100/50 flex items-center justify-center" />
-                
-                {/* Inner Ring */}
-                <div className="absolute w-[60px] h-[60px] rounded-full border border-gray-200" />
-
-                {/* Center point - Office */}
-                <div className="absolute flex flex-col items-center z-10">
-                  <div className="w-4 h-4 rounded-full bg-gray-900 border-2 border-white shadow-sm flex items-center justify-center text-[7px] text-white font-bold">K</div>
-                  <span className="text-[8px] font-bold text-gray-600 mt-1 bg-white/80 px-1 rounded">Kantor</span>
+                  ) : (
+                    <div className="bg-amber-50 border border-amber-100 text-amber-800 rounded-xl p-3.5 flex items-start gap-2 text-xs">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <h5 className="font-bold">Berada di Luar Radius</h5>
+                        <p className="text-[11px] text-amber-600/90 mt-0.5">Anda saat ini berjarak {distance}m dari titik kantor. Silakan mendekat atau sesuaikan titik koordinat kantor jika diperlukan.</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <p className="text-xs text-gray-400 text-center py-4">Tekan segarkan lokasi untuk mendapatkan GPS.</p>
+              )}
+            </div>
 
-                {/* User point representation relative to distance */}
-                {distance !== null && (
-                  <div 
-                    className="absolute flex flex-col items-center transition-all duration-1000 z-10"
-                    style={{
-                      // Position dynamically on a diagonal based on geofence compliance
-                      transform: isWithinRadius 
-                        ? `translate(${(distance / (officeLoc.radius || 100)) * 25}px, -${(distance / (officeLoc.radius || 100)) * 25}px)`
-                        : `translate(65px, -65px)`
-                    }}
-                  >
-                    <div className={`w-3.5 h-3.5 rounded-full border-2 border-white shadow-md ${isWithinRadius ? 'bg-emerald-600' : 'bg-amber-600 animate-ping'}`} />
-                    <span className="text-[8px] font-bold text-gray-600 mt-0.5 bg-white/80 px-1 rounded">Anda ({distance}m)</span>
+            {/* Minimalist SVG Coordinate Map Visualization */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex flex-col items-center">
+              <h4 className="text-xs font-semibold text-gray-800 self-start mb-3 flex items-center gap-1.5">
+                <Map className="w-4 h-4 text-gray-500" />
+                Radar Jarak Lokasi Kerja
+              </h4>
+
+              {currentCoords ? (
+                <div className="w-full aspect-square max-w-[200px] relative border border-gray-100 bg-gray-50 rounded-full flex items-center justify-center p-4">
+                  {/* Geofence Ring */}
+                  <div className="absolute w-[120px] h-[120px] rounded-full border border-gray-300 border-dashed animate-pulse bg-gray-100/50 flex items-center justify-center" />
+                  
+                  {/* Inner Ring */}
+                  <div className="absolute w-[60px] h-[60px] rounded-full border border-gray-200" />
+
+                  {/* Center point - Office */}
+                  <div className="absolute flex flex-col items-center z-10">
+                    <div className="w-4 h-4 rounded-full bg-gray-900 border-2 border-white shadow-sm flex items-center justify-center text-[7px] text-white font-bold">K</div>
+                    <span className="text-[8px] font-bold text-gray-600 mt-1 bg-white/80 px-1 rounded">Kantor</span>
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="h-[200px] flex items-center justify-center text-xs text-gray-400">
-                Radar membutuhkan data lokasi GPS Anda.
-              </div>
-            )}
-          </div>
 
-        </div>
+                  {/* User point representation relative to distance */}
+                  {distance !== null && (
+                    <div 
+                      className="absolute flex flex-col items-center transition-all duration-1000 z-10"
+                      style={{
+                        // Position dynamically on a diagonal based on geofence compliance
+                        transform: isWithinRadius 
+                          ? `translate(${(distance / (officeLoc.radius || 100)) * 25}px, -${(distance / (officeLoc.radius || 100)) * 25}px)`
+                          : `translate(65px, -65px)`
+                      }}
+                    >
+                      <div className={`w-3.5 h-3.5 rounded-full border-2 border-white shadow-md ${isWithinRadius ? 'bg-emerald-600' : 'bg-amber-600 animate-ping'}`} />
+                      <span className="text-[8px] font-bold text-gray-600 mt-0.5 bg-white/80 px-1 rounded">Anda ({distance}m)</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-xs text-gray-400">
+                  Radar membutuhkan data lokasi GPS Anda.
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
       </div>
 
       {/* Row: Historic Logs */}
@@ -959,20 +1246,22 @@ export default function AttendanceSystem({
               <tbody className="divide-y divide-gray-50 text-gray-700">
                 {attendanceLogs.map((log) => {
                   const dayFormat = new Date(log.date).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+                  const isSakitOrIzin = log.status === 'Sakit' || log.status === 'Izin';
+                  
                   return (
                     <tr key={log.id} className="hover:bg-gray-50/50">
                       <td className="px-4 py-3.5 font-semibold text-gray-900">{dayFormat}</td>
                       <td className="px-4 py-3.5 text-center">
                         <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 mx-auto bg-gray-50 flex items-center justify-center">
                           {log.clockInPhoto ? (
-                            <img src={log.clockInPhoto} alt="Clock-In" className="w-full h-full object-cover" />
+                            <img src={log.clockInPhoto} alt={isSakitOrIzin ? "Lampiran Bukti" : "Clock-In"} className="w-full h-full object-cover" />
                           ) : (
                             <ImageIcon className="w-4 h-4 text-gray-300" />
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 font-mono">{log.clockInTime}</td>
-                      <td className="px-4 py-3.5 font-medium text-gray-500">{log.clockInDistance} m</td>
+                      <td className="px-4 py-3.5 font-mono">{isSakitOrIzin ? '-' : (log.clockInTime || '-')}</td>
+                      <td className="px-4 py-3.5 font-medium text-gray-500">{isSakitOrIzin ? '-' : (log.clockInDistance !== undefined ? `${log.clockInDistance} m` : '-')}</td>
                       <td className="px-4 py-3.5 text-center">
                         <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 mx-auto bg-gray-50 flex items-center justify-center">
                           {log.clockOutPhoto ? (
@@ -982,18 +1271,38 @@ export default function AttendanceSystem({
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 font-mono">{log.clockOutTime || '--:--:--'}</td>
+                      <td className="px-4 py-3.5 font-mono">{isSakitOrIzin ? '-' : (log.clockOutTime || '--:--:--')}</td>
                       <td className="px-4 py-3.5 font-medium text-gray-500">
-                        {log.clockOutDistance !== undefined ? `${log.clockOutDistance} m` : '-'}
+                        {isSakitOrIzin ? '-' : (log.clockOutDistance !== undefined ? `${log.clockOutDistance} m` : '-')}
                       </td>
                       <td className="px-4 py-3.5">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${
-                          log.clockOutTime 
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                            : 'bg-blue-50 text-blue-700 border-blue-100'
-                        }`}>
-                          {log.clockOutTime ? 'Selesai Kerja' : 'Sedang Kerja'}
-                        </span>
+                        {log.status === 'Sakit' ? (
+                          <div className="space-y-0.5">
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border bg-rose-50 text-rose-700 border-rose-100">
+                              Sakit
+                            </span>
+                            <div className="text-[10px] text-rose-600 font-medium max-w-[150px] truncate" title={log.notes}>
+                              {log.notes}
+                            </div>
+                          </div>
+                        ) : log.status === 'Izin' ? (
+                          <div className="space-y-0.5">
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border bg-amber-50 text-amber-700 border-amber-100">
+                              Izin
+                            </span>
+                            <div className="text-[10px] text-amber-600 font-medium max-w-[150px] truncate" title={log.notes}>
+                              {log.notes}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                            log.clockOutTime 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                              : 'bg-blue-50 text-blue-700 border-blue-100'
+                          }`}>
+                            {log.clockOutTime ? 'Selesai Kerja' : 'Sedang Kerja'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3.5 text-right">
                         <button
