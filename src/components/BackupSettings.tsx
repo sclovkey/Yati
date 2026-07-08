@@ -114,134 +114,134 @@ export default function BackupSettings({
   };
 
   return (
-    <div id="backup-settings-container" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div id="backup-settings-container" className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-black font-sans">
       {/* Profil Magang Form (Left/Center Column) */}
-      <div className="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-xs space-y-6">
+      <div className="lg:col-span-2 bg-white border-4 border-black p-6 md:p-8 shadow-[6px_6px_0px_rgba(0,0,0,1)] space-y-6">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">Profil & Informasi Magang</h3>
-          <p className="text-xs text-gray-400">Atur profil Anda agar tercetak otomatis pada kover laporan PDF dan berkas Excel Anda.</p>
+          <h3 className="font-display font-black text-black uppercase text-lg tracking-wide">Profil & Informasi Magang</h3>
+          <p className="text-xs font-bold text-black/70 leading-relaxed">Atur profil Anda agar tercetak otomatis pada kover laporan PDF dan berkas Excel Anda.</p>
         </div>
 
-        <form onSubmit={handleSaveProfile} className="space-y-5 border-t border-gray-100 pt-5">
+        <form onSubmit={handleSaveProfile} className="space-y-5 border-t-4 border-black pt-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {/* Student Name */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider block">Nama Lengkap Mahasiswa</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Nama Lengkap Mahasiswa</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                  <User className="w-3.5 h-3.5" />
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-black">
+                  <User className="w-4 h-4 text-black" />
                 </span>
                 <input
                   type="text"
                   value={profile.studentName}
                   onChange={(e) => handleProfileChange('studentName', e.target.value)}
                   placeholder="Contoh: Yati Amalia"
-                  className="w-full pl-10 pr-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="w-full pl-10 pr-3.5 py-2.5 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
                 />
               </div>
             </div>
 
             {/* Institution */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider block">Institusi / Universitas</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Institusi / Universitas</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                  <Clipboard className="w-3.5 h-3.5" />
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-black">
+                  <Clipboard className="w-4 h-4 text-black" />
                 </span>
                 <input
                   type="text"
                   value={profile.institution}
                   onChange={(e) => handleProfileChange('institution', e.target.value)}
                   placeholder="Contoh: Universitas Indonesia"
-                  className="w-full pl-10 pr-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="w-full pl-10 pr-3.5 py-2.5 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
                 />
               </div>
             </div>
 
             {/* Company Name */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider block">Perusahaan / Instansi Magang</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Perusahaan / Instansi Magang</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                  <Building className="w-3.5 h-3.5" />
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-black">
+                  <Building className="w-4 h-4 text-black" />
                 </span>
                 <input
                   type="text"
                   value={profile.companyName}
                   onChange={(e) => handleProfileChange('companyName', e.target.value)}
                   placeholder="Contoh: PT Teknologi Nusantara"
-                  className="w-full pl-10 pr-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="w-full pl-10 pr-3.5 py-2.5 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
                 />
               </div>
             </div>
 
             {/* Internship Role / Position */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider block">Posisi / Peran Magang</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Posisi / Peran Magang</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                  <User className="w-3.5 h-3.5" />
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-black">
+                  <User className="w-4 h-4 text-black" />
                 </span>
                 <input
                   type="text"
                   value={profile.position}
                   onChange={(e) => handleProfileChange('position', e.target.value)}
                   placeholder="Contoh: UI/UX Designer Intern"
-                  className="w-full pl-10 pr-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="w-full pl-10 pr-3.5 py-2.5 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
                 />
               </div>
             </div>
 
             {/* Start Date */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider block">Tanggal Mulai Magang</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Tanggal Mulai Magang</label>
               <input
                 type="date"
                 value={profile.startDate}
                 onChange={(e) => handleProfileChange('startDate', e.target.value)}
-                className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
+                className="w-full px-3.5 py-2.5 border-2 border-black bg-white text-xs font-mono font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
               />
             </div>
 
             {/* End Date */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider block">Tanggal Selesai Magang</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Tanggal Selesai Magang</label>
               <input
                 type="date"
                 value={profile.endDate}
                 onChange={(e) => handleProfileChange('endDate', e.target.value)}
-                className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
+                className="w-full px-3.5 py-2.5 border-2 border-black bg-white text-xs font-mono font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
               />
             </div>
           </div>
 
           {/* Supervisor / Mentor Name */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider block">Nama Pembimbing Lapangan (Mentor Utama)</label>
+            <label className="text-[10px] font-black text-black uppercase tracking-wider block">Nama Pembimbing Lapangan (Mentor Utama)</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                <User className="w-3.5 h-3.5" />
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-black">
+                <User className="w-4 h-4 text-black" />
               </span>
               <input
                 type="text"
                 value={profile.mentorName}
                 onChange={(e) => handleProfileChange('mentorName', e.target.value)}
                 placeholder="Contoh: Budi Prasetyo, S.Kom"
-                className="w-full pl-10 pr-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
+                className="w-full pl-10 pr-3.5 py-2.5 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-t border-gray-100 pt-5">
-            <span className="text-xs text-gray-400">Data otomatis disimpan di penyimpanan lokal browser.</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t-2 border-black pt-5">
+            <span className="text-xs font-bold text-black/60">Data otomatis disimpan di penyimpanan lokal browser.</span>
             
             <button
               type="submit"
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                isSaved ? 'bg-green-600 text-white' : 'bg-gray-900 text-white hover:bg-gray-800'
+              className={`inline-flex items-center gap-2 px-5 py-2.5 border-2 border-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer ${
+                isSaved ? 'bg-[#39FF14] text-black' : 'bg-[#FFDE4D] text-black hover:bg-[#ffe366]'
               }`}
             >
-              <Save className="w-3.5 h-3.5" />
+              <Save className="w-4 h-4 text-black" />
               {isSaved ? 'Profil Tersimpan!' : 'Simpan Profil'}
             </button>
           </div>
@@ -251,29 +251,29 @@ export default function BackupSettings({
       {/* Backup & Slates Column (Right Column) */}
       <div className="space-y-6">
         {/* Backup / Restore Card */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs space-y-6">
+        <div className="bg-[#FFFDF6] border-4 border-black p-6 shadow-[6px_6px_0px_rgba(0,0,0,1)] space-y-6">
           <div>
-            <h3 className="text-base font-semibold text-gray-900">Backup & Pemulihan</h3>
-            <p className="text-xs text-gray-400">Cegah kehilangan data dengan mengekspor salinan cadangan logbook Anda.</p>
+            <h3 className="font-display font-black text-black uppercase text-base tracking-wide">Backup & Pemulihan</h3>
+            <p className="text-xs font-bold text-black/70 leading-relaxed">Cegah kehilangan data dengan mengekspor salinan cadangan logbook Anda.</p>
           </div>
 
-          <div className="space-y-3 pt-4 border-t border-gray-100">
+          <div className="space-y-3 pt-4 border-t-2 border-black">
             {/* Export JSON backup button */}
             <button
               onClick={handleExportBackup}
-              className="w-full inline-flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors cursor-pointer"
+              className="w-full inline-flex items-center justify-between px-4 py-3 bg-[#C3F2FF] hover:bg-[#a9e4f5] text-black text-xs font-black uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
-                <Download className="w-4 h-4 text-gray-500" />
+                <Download className="w-4 h-4 text-black" />
                 Ekspor Cadangan (.JSON)
               </span>
-              <span className="text-[10px] text-gray-400 bg-white px-2 py-0.5 rounded border border-gray-100 font-mono">BACKUP</span>
+              <span className="text-[10px] text-black bg-white px-2 py-0.5 border-2 border-black font-mono font-black shadow-[1px_1px_0px_rgba(0,0,0,1)]">BACKUP</span>
             </button>
 
             {/* Import JSON backup trigger */}
-            <label className="w-full inline-flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors cursor-pointer">
+            <label className="w-full inline-flex items-center justify-between px-4 py-3 bg-[#FFDE4D] hover:bg-[#ffe366] text-black text-xs font-black uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer">
               <span className="flex items-center gap-2.5">
-                <Upload className="w-4 h-4 text-gray-500" />
+                <Upload className="w-4 h-4 text-black" />
                 Impor & Pulihkan Data
               </span>
               <input
@@ -283,25 +283,25 @@ export default function BackupSettings({
                 onChange={handleImportBackup}
                 className="hidden"
               />
-              <span className="text-[10px] text-gray-400 bg-white px-2 py-0.5 rounded border border-gray-100 font-mono">RESTORE</span>
+              <span className="text-[10px] text-black bg-white px-2 py-0.5 border-2 border-black font-mono font-black shadow-[1px_1px_0px_rgba(0,0,0,1)]">RESTORE</span>
             </label>
           </div>
         </div>
 
         {/* Logout Card */}
         {onLogout && (
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs space-y-4 animate-fadeIn">
+          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_rgba(0,0,0,1)] space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-gray-900">Sesi Pengguna</h3>
-              <p className="text-xs text-gray-400">Keluar dari akun Anda saat ini untuk berganti akun lain.</p>
+              <h3 className="font-display font-black text-black uppercase text-sm tracking-wide">Sesi Pengguna</h3>
+              <p className="text-xs font-bold text-black/70">Keluar dari akun Anda saat ini untuk berganti akun lain.</p>
             </div>
-            <div className="pt-3 border-t border-gray-100">
+            <div className="pt-3 border-t-2 border-black">
               <button
                 type="button"
                 onClick={onLogout}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#FF6B6B] hover:bg-[#ff5555] text-black border-2 border-black text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer"
               >
-                <LogOut className="w-4 h-4 text-gray-500" />
+                <LogOut className="w-4 h-4 text-black" />
                 Keluar dari Akun
               </button>
             </div>
@@ -309,19 +309,19 @@ export default function BackupSettings({
         )}
 
         {/* Danger Zone Card */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="bg-white border-4 border-[#FF6B6B] p-6 shadow-[6px_6px_0px_#FF6B6B] space-y-4">
           <div>
-            <h3 className="text-sm font-bold text-red-600">Danger Zone</h3>
-            <p className="text-[11px] text-gray-400">Pengaturan ini akan menghapus semua logbook dan riwayat presensi secara permanen.</p>
+            <h3 className="font-display font-black text-[#FF6B6B] uppercase text-sm tracking-wide">Danger Zone</h3>
+            <p className="text-[11px] font-bold text-black/60">Pengaturan ini akan menghapus semua logbook dan riwayat presensi secara permanen.</p>
           </div>
 
-          <div className="pt-3 border-t border-red-50">
+          <div className="pt-3 border-t-2 border-[#FF6B6B]">
             <button
               type="button"
               onClick={handleClearClick}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200/40 text-red-600 hover:text-red-700 text-xs font-semibold rounded-xl transition-all cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#FF6B6B]/20 hover:bg-[#FF6B6B] border-2 border-black text-black text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4 text-black" />
               Kosongkan Semua Data
             </button>
           </div>

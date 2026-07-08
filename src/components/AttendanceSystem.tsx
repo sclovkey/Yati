@@ -614,15 +614,15 @@ export default function AttendanceSystem({
   const isWithinRadius = distance !== null && distance <= officeLoc.radius;
 
   return (
-    <div id="attendance-section" className="space-y-8 animate-fadeIn">
+    <div id="attendance-section" className="space-y-8 text-black font-sans">
       {/* Header Banner */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-white border-4 border-black p-6 md:p-8 shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-gray-900">
-            <UserCheck className="w-5 h-5 text-gray-900" />
-            <h1 className="text-xl font-bold tracking-tight">Presensi Kehadiran Harian</h1>
+          <div className="flex items-center gap-2 text-black">
+            <UserCheck className="w-6 h-6 text-black" />
+            <h1 className="text-xl font-display font-black uppercase tracking-wide">Presensi Kehadiran Harian</h1>
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs font-bold text-black/70 leading-relaxed">
             Lakukan pencatatan jam masuk dan pulang kerja magang Anda secara real-time dengan melampirkan swafoto (selfie) dan deteksi titik lokasi kantor.
           </p>
         </div>
@@ -635,61 +635,61 @@ export default function AttendanceSystem({
             setTempRadius(officeLoc.radius.toString());
             setTempName(officeLoc.name);
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-xl text-xs font-semibold hover:bg-gray-50 transition-all text-gray-600"
+          className="flex items-center gap-1.5 px-3.5 py-2 border-2 border-black bg-[#C3F2FF] hover:bg-[#a9e4f5] text-xs font-black uppercase tracking-wider text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer"
         >
-          <Settings className="w-3.5 h-3.5" />
+          <Settings className="w-4 h-4 text-black" />
           {showSettings ? 'Tutup Atur Titik' : 'Atur Titik Kantor'}
         </button>
       </div>
 
       {/* Settings Form Card */}
       {showSettings && (
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 md:p-6 shadow-sm space-y-4">
+        <div className="bg-[#FFFDF6] border-4 border-black p-5 md:p-6 shadow-[6px_6px_0px_rgba(0,0,0,1)] space-y-4">
           <div className="flex items-center gap-2">
-            <MapPinned className="w-4 h-4 text-gray-800" />
-            <h3 className="font-bold text-sm text-gray-900">Konfigurasi Titik Tempat Kerja (Geofencing)</h3>
+            <MapPinned className="w-5 h-5 text-black" />
+            <h3 className="font-display font-black text-black uppercase text-sm">Konfigurasi Titik Tempat Kerja (Geofencing)</h3>
           </div>
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs font-bold text-black/70 leading-relaxed">
             Presensi diatur menggunakan batasan koordinat GPS. Isikan koordinat lokasi kantor Anda di bawah ini atau klik tombol otomatis untuk mengunci titik kantor berdasarkan posisi Anda sekarang.
           </p>
           <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Nama Tempat Kerja</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Nama Tempat Kerja</label>
               <input
                 type="text"
                 value={tempName}
                 onChange={(e) => setTempName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 bg-white"
+                className="w-full px-3 py-2 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Latitude Koordinat</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Latitude Koordinat</label>
               <input
                 type="text"
                 value={tempLat}
                 onChange={(e) => setTempLat(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 font-mono bg-white"
+                className="w-full px-3 py-2 border-2 border-black bg-white text-xs font-mono font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Longitude Koordinat</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Longitude Koordinat</label>
               <input
                 type="text"
                 value={tempLng}
                 onChange={(e) => setTempLng(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 font-mono bg-white"
+                className="w-full px-3 py-2 border-2 border-black bg-white text-xs font-mono font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Radius Toleransi (Meter)</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Radius Toleransi (Meter)</label>
               <input
                 type="number"
                 value={tempRadius}
                 onChange={(e) => setTempRadius(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 bg-white"
+                className="w-full px-3 py-2 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
                 min="10"
                 max="5000"
                 required
@@ -699,22 +699,22 @@ export default function AttendanceSystem({
               <button
                 type="button"
                 onClick={handleSetCurrentAsOffice}
-                className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-semibold transition-all flex items-center gap-1"
+                className="px-3.5 py-2 bg-[#FFDE4D] hover:bg-[#ffe366] text-black border-2 border-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <MapPin className="w-3.5 h-3.5 text-gray-600" />
+                <MapPin className="w-4 h-4 text-black" />
                 Gunakan Lokasi Saya Saat Ini
               </button>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setShowSettings(false)}
-                  className="px-4 py-1.5 border border-gray-200 hover:bg-gray-50 rounded-xl text-xs font-semibold text-gray-600 transition-all"
+                  className="px-4 py-2 border-2 border-black hover:bg-black/5 bg-white text-xs font-black uppercase tracking-wide cursor-pointer transition-all"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-gray-900 text-white hover:bg-gray-800 rounded-xl text-xs font-semibold transition-all"
+                  className="px-4 py-2 bg-[#39FF14] text-black border-2 border-black hover:bg-[#2adb10] text-xs font-black uppercase tracking-wide shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer"
                 >
                   Simpan Titik Kantor
                 </button>
@@ -732,13 +732,13 @@ export default function AttendanceSystem({
           (presenceTab === 'nonHadir' || todayRecord?.status === 'Sakit' || todayRecord?.status === 'Izin')
             ? 'lg:col-span-12' 
             : 'lg:col-span-7'
-        } bg-white border border-gray-100 rounded-2xl p-6 shadow-xs flex flex-col space-y-6`}>
+        } bg-white border-4 border-black p-6 shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col space-y-6`}>
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900 text-base flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-500" />
+            <h2 className="font-display font-black text-black uppercase text-base flex items-center gap-2">
+              <Clock className="w-5 h-5 text-black" />
               Konfirmasi Presensi Hari Ini
             </h2>
-            <div className="flex items-center gap-1 text-[10px] bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1 font-semibold text-gray-500">
+            <div className="flex items-center gap-1 text-[10px] bg-[#C3F2FF] border-2 border-black px-2.5 py-1 font-black uppercase text-black font-mono">
               <Calendar className="w-3.5 h-3.5" />
               <span>{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}</span>
             </div>
@@ -747,18 +747,18 @@ export default function AttendanceSystem({
           {/* Status Badge Indicator */}
           {todayRecord ? (
             todayRecord.status === 'Sakit' ? (
-              <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex justify-between items-start gap-3">
+              <div className="bg-[#FF6B6B]/20 border-2 border-black p-4 flex justify-between items-start gap-3 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 mt-0.5">
+                  <div className="w-8 h-8 bg-[#FF6B6B] border border-black flex items-center justify-center text-black shrink-0 mt-0.5">
                     <AlertCircle className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-rose-800 font-sans">Keterangan Hari Ini: Sakit</h4>
-                    <p className="text-[11px] text-rose-600 mt-0.5 font-sans leading-relaxed">Alasan: {todayRecord.notes || '-'}</p>
+                    <h4 className="text-xs font-display font-black text-black uppercase">Keterangan Hari Ini: Sakit</h4>
+                    <p className="text-[11px] font-bold text-black/70 mt-0.5 font-sans leading-relaxed">Alasan: {todayRecord.notes || '-'}</p>
                     {todayRecord.clockInPhoto && (
                       <div className="mt-2">
-                        <span className="text-[10px] text-rose-500 block mb-1">Lampiran Bukti:</span>
-                        <img src={todayRecord.clockInPhoto} alt="Surat Dokter" className="w-20 h-20 rounded-lg object-cover border border-rose-200" />
+                        <span className="text-[10px] font-black text-black/70 uppercase block mb-1">Lampiran Bukti:</span>
+                        <img src={todayRecord.clockInPhoto} alt="Surat Dokter" className="w-20 h-20 border border-black object-cover" />
                       </div>
                     )}
                   </div>
@@ -766,24 +766,24 @@ export default function AttendanceSystem({
                 <button
                   type="button"
                   onClick={() => onDeleteAttendance(todayRecord.id)}
-                  className="text-[10px] font-bold text-rose-700 hover:underline cursor-pointer"
+                  className="text-[10px] font-black text-[#FF6B6B] uppercase hover:underline decoration-2 cursor-pointer"
                 >
                   Batalkan
                 </button>
               </div>
             ) : todayRecord.status === 'Izin' ? (
-              <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex justify-between items-start gap-3">
+              <div className="bg-[#FFDE4D]/20 border-2 border-black p-4 flex justify-between items-start gap-3 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 shrink-0 mt-0.5">
+                  <div className="w-8 h-8 bg-[#FFDE4D] border border-black flex items-center justify-center text-black shrink-0 mt-0.5">
                     <AlertCircle className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-amber-800 font-sans">Keterangan Hari Ini: Izin</h4>
-                    <p className="text-[11px] text-amber-600 mt-0.5 font-sans leading-relaxed">Alasan: {todayRecord.notes || '-'}</p>
+                    <h4 className="text-xs font-display font-black text-black uppercase">Keterangan Hari Ini: Izin</h4>
+                    <p className="text-[11px] font-bold text-black/70 mt-0.5 font-sans leading-relaxed">Alasan: {todayRecord.notes || '-'}</p>
                     {todayRecord.clockInPhoto && (
                       <div className="mt-2">
-                        <span className="text-[10px] text-amber-500 block mb-1">Lampiran Bukti:</span>
-                        <img src={todayRecord.clockInPhoto} alt="Surat Izin" className="w-20 h-20 rounded-lg object-cover border border-amber-200" />
+                        <span className="text-[10px] font-black text-black/70 uppercase block mb-1">Lampiran Bukti:</span>
+                        <img src={todayRecord.clockInPhoto} alt="Surat Izin" className="w-20 h-20 border border-black object-cover" />
                       </div>
                     )}
                   </div>
@@ -791,48 +791,48 @@ export default function AttendanceSystem({
                 <button
                   type="button"
                   onClick={() => onDeleteAttendance(todayRecord.id)}
-                  className="text-[10px] font-bold text-amber-700 hover:underline cursor-pointer"
+                  className="text-[10px] font-black text-black hover:underline decoration-2 cursor-pointer uppercase"
                 >
                   Batalkan
                 </button>
               </div>
             ) : todayRecord.clockInTime && todayRecord.clockOutTime ? (
-              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="bg-[#39FF14]/20 border-2 border-black p-4 flex items-start gap-3 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                <CheckCircle className="w-5 h-5 text-black shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-emerald-800 font-sans">Presensi Hari Ini Selesai</h4>
-                  <p className="text-[11px] text-emerald-600 mt-1 font-sans">Anda sudah melakukan pencatatan jam masuk ({todayRecord.clockInTime}) dan jam pulang ({todayRecord.clockOutTime}) untuk hari ini.</p>
+                  <h4 className="text-xs font-display font-black text-black uppercase">Presensi Hari Ini Selesai</h4>
+                  <p className="text-[11px] font-bold text-black/80 mt-1">Anda sudah melakukan pencatatan jam masuk ({todayRecord.clockInTime}) dan jam pulang ({todayRecord.clockOutTime}) untuk hari ini.</p>
                 </div>
               </div>
             ) : (
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
-                <LogIn className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+              <div className="bg-[#C3F2FF] border-2 border-black p-4 flex items-start gap-3 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                <LogIn className="w-5 h-5 text-black shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-blue-800 font-sans">Sudah Melakukan Presensi Masuk</h4>
-                  <p className="text-[11px] text-blue-600 mt-1 font-sans">Anda masuk pada pukul <strong>{todayRecord.clockInTime}</strong>. Jangan lupa untuk melakukan presensi pulang saat selesai magang.</p>
+                  <h4 className="text-xs font-display font-black text-black uppercase">Sudah Melakukan Presensi Masuk</h4>
+                  <p className="text-[11px] font-bold text-black/80 mt-1">Anda masuk pada pukul <strong>{todayRecord.clockInTime}</strong>. Jangan lupa untuk melakukan presensi pulang saat selesai magang.</p>
                 </div>
               </div>
             )
           ) : (
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="bg-[#FFDE4D]/30 border-2 border-black p-4 flex items-start gap-3 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+              <AlertCircle className="w-5 h-5 text-black shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-bold text-amber-800 font-sans">Belum Melakukan Presensi</h4>
-                <p className="text-[11px] text-amber-600 mt-1 font-sans">Harap lakukan pencatatan jam masuk atau ajukan keterangan sakit/izin jika Anda berhalangan hadir hari ini.</p>
+                <h4 className="text-xs font-display font-black text-black uppercase">Belum Melakukan Presensi</h4>
+                <p className="text-[11px] font-bold text-black/80 mt-1">Harap lakukan pencatatan jam masuk atau ajukan keterangan sakit/izin jika Anda berhalangan hadir hari ini.</p>
               </div>
             </div>
           )}
 
           {/* Tab Selector - only show when not yet clocked-in */}
           {!todayRecord && (
-            <div className="flex bg-gray-100 p-1 rounded-xl">
+            <div className="flex bg-black p-1 border border-black">
               <button
                 type="button"
                 onClick={() => setPresenceTab('hadir')}
-                className={`flex-1 py-2 text-center text-xs font-bold rounded-lg cursor-pointer transition-all ${
+                className={`flex-1 py-2 text-center text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                   presenceTab === 'hadir'
-                    ? 'bg-white text-gray-900 shadow-xs'
-                    : 'text-gray-500 hover:text-gray-800'
+                    ? 'bg-[#39FF14] text-black border border-black'
+                    : 'text-white hover:text-[#39FF14]'
                 }`}
               >
                 Hadir (Selfie & GPS)
@@ -840,10 +840,10 @@ export default function AttendanceSystem({
               <button
                 type="button"
                 onClick={() => setPresenceTab('nonHadir')}
-                className={`flex-1 py-2 text-center text-xs font-bold rounded-lg cursor-pointer transition-all ${
+                className={`flex-1 py-2 text-center text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                   presenceTab === 'nonHadir'
-                    ? 'bg-white text-gray-900 shadow-xs'
-                    : 'text-gray-500 hover:text-gray-800'
+                    ? 'bg-[#39FF14] text-black border border-black'
+                    : 'text-white hover:text-[#39FF14]'
                 }`}
               >
                 Sakit / Izin
@@ -853,15 +853,15 @@ export default function AttendanceSystem({
 
           {/* Sakit / Izin Form View */}
           {!todayRecord && presenceTab === 'nonHadir' && (
-            <form onSubmit={handleNonPresenceSubmit} className="space-y-4 animate-fadeIn">
+            <form onSubmit={handleNonPresenceSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => setNonPresenceType('Sakit')}
-                  className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                  className={`py-3 px-4 text-xs font-black uppercase tracking-wider border-2 border-black transition-all cursor-pointer text-center ${
                     nonPresenceType === 'Sakit'
-                      ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-xs'
-                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      ? 'bg-[#FF6B6B] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)]'
+                      : 'bg-white text-black hover:bg-black/5 shadow-none'
                   }`}
                 >
                   🤕 Sakit
@@ -869,10 +869,10 @@ export default function AttendanceSystem({
                 <button
                   type="button"
                   onClick={() => setNonPresenceType('Izin')}
-                  className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                  className={`py-3 px-4 text-xs font-black uppercase tracking-wider border-2 border-black transition-all cursor-pointer text-center ${
                     nonPresenceType === 'Izin'
-                      ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-xs'
-                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      ? 'bg-[#FFDE4D] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)]'
+                      : 'bg-white text-black hover:bg-black/5 shadow-none'
                   }`}
                 >
                   📄 Izin / Keperluan Lain
@@ -880,33 +880,33 @@ export default function AttendanceSystem({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+                <label className="text-[10px] font-black text-black uppercase tracking-wider block">
                   Alasan Keterangan
                 </label>
                 <textarea
                   value={nonPresenceReason}
                   onChange={(e) => setNonPresenceReason(e.target.value)}
                   placeholder={nonPresenceType === 'Sakit' ? 'Contoh: Demam tinggi, butuh istirahat di rumah / berobat ke dokter' : 'Contoh: Ada keperluan keluarga mendesak'}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 bg-white min-h-[80px]"
+                  className="w-full px-3 py-2.5 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all min-h-[80px]"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+                <label className="text-[10px] font-black text-black uppercase tracking-wider block">
                   Lampiran Foto Surat Dokter / Bukti (Opsional)
                 </label>
                 <div className="flex gap-4 items-center">
-                  <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="w-16 h-16 border-2 border-black bg-[#FFFDF6] flex items-center justify-center overflow-hidden shrink-0 shadow-[1px_1px_0px_rgba(0,0,0,1)]">
                     {nonPresencePhoto ? (
                       <img src={nonPresencePhoto} alt="Attachment" className="w-full h-full object-cover" />
                     ) : (
-                      <ImageIcon className="w-5 h-5 text-gray-400" />
+                      <ImageIcon className="w-6 h-6 text-black/55" />
                     )}
                   </div>
                   <div className="flex-1">
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-[10px] font-extrabold transition-all shadow-xs cursor-pointer">
-                      <Camera className="w-3.5 h-3.5 text-gray-500" />
+                    <label className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#C3F2FF] hover:bg-[#a9e4f5] text-black border-2 border-black text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all cursor-pointer">
+                      <Camera className="w-3.5 h-3.5 text-black" />
                       {nonPresencePhoto ? 'Ubah Foto Bukti' : 'Unggah Foto Bukti'}
                       <input
                         type="file"
@@ -924,15 +924,15 @@ export default function AttendanceSystem({
                         className="hidden"
                       />
                     </label>
-                    <p className="text-[9px] text-gray-400 mt-1">Format gambar JPG/PNG maks. 5MB</p>
+                    <p className="text-[9px] font-bold text-black/60 mt-1">Format gambar JPG/PNG maks. 5MB</p>
                   </div>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className={`w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer text-white ${
-                  nonPresenceType === 'Sakit' ? 'bg-rose-600 hover:bg-rose-700 shadow-sm' : 'bg-amber-600 hover:bg-amber-700 shadow-sm'
+                className={`w-full py-3 px-4 border-2 border-black font-black uppercase text-xs flex items-center justify-center gap-2 tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer text-black ${
+                  nonPresenceType === 'Sakit' ? 'bg-[#FF6B6B] hover:bg-[#ff5555]' : 'bg-[#FFDE4D] hover:bg-[#ffe366]'
                 }`}
               >
                 Kirim Keterangan {nonPresenceType}
@@ -943,9 +943,9 @@ export default function AttendanceSystem({
           {/* Camera Frame Module */}
           {(!todayRecord || (!todayRecord.clockOutTime && todayRecord.status !== 'Sakit' && todayRecord.status !== 'Izin')) && (presenceTab === 'hadir' || todayRecord) && (
             <div className="space-y-3">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Foto Bukti Aktivitas / Selfie</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Foto Bukti Aktivitas / Selfie</label>
               
-              <div className="relative aspect-[4/3] rounded-2xl bg-gray-950 border border-gray-100 overflow-hidden flex flex-col items-center justify-center text-center">
+              <div className="relative aspect-[4/3] border-4 border-black bg-black overflow-hidden flex flex-col items-center justify-center text-center shadow-[4px_4px_0px_rgba(0,0,0,1)]">
                  {cameraActive ? (
                   <video 
                     ref={videoRefCallback} 
@@ -962,15 +962,15 @@ export default function AttendanceSystem({
                   />
                 ) : cameraError ? (
                   <div className="p-6 space-y-3 z-10">
-                    <div className="w-10 h-10 bg-amber-500/20 rounded-2xl flex items-center justify-center mx-auto text-amber-400 animate-pulse">
+                    <div className="w-10 h-10 bg-[#FF6B6B] border-2 border-black flex items-center justify-center mx-auto text-black shadow-[1px_1px_0px_rgba(0,0,0,1)]">
                       <Camera className="w-5 h-5" />
                     </div>
-                    <h4 className="text-xs font-bold text-gray-200">Kamera Langsung Terhambat</h4>
-                    <p className="text-[10px] text-gray-400 max-w-xs mx-auto">
+                    <h4 className="text-xs font-black text-white uppercase tracking-wide">Kamera Langsung Terhambat</h4>
+                    <p className="text-[10px] text-gray-300 max-w-xs mx-auto">
                       Kamera diblokir atau tidak terdeteksi oleh browser Anda. Silakan tetap berswafoto dengan memilih opsi unggah manual di bawah:
                     </p>
                     <div className="flex flex-wrap justify-center gap-2 pt-1">
-                      <label className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-extrabold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+                      <label className="px-3.5 py-1.5 bg-[#39FF14] text-black border-2 border-black text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-[2px_2px_0px_rgba(0,0,0,1)] cursor-pointer">
                         <Camera className="w-3.5 h-3.5" />
                         Gunakan Kamera HP
                         <input
@@ -981,8 +981,8 @@ export default function AttendanceSystem({
                           className="hidden"
                         />
                       </label>
-                      <label className="px-3.5 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
-                        <ImageIcon className="w-3.5 h-3.5 text-gray-400" />
+                      <label className="px-3.5 py-1.5 bg-white text-black border-2 border-black text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-[2px_2px_0px_rgba(0,0,0,1)] cursor-pointer">
+                        <ImageIcon className="w-3.5 h-3.5 text-black" />
                         Pilih dari Galeri
                         <input
                           type="file"
@@ -994,12 +994,12 @@ export default function AttendanceSystem({
                     </div>
                   </div>
                 ) : !cameraEnabled ? (
-                  <div className="p-6 space-y-3 z-10 text-center animate-fadeIn">
-                    <div className="w-12 h-12 bg-gray-800/80 rounded-2xl flex items-center justify-center mx-auto text-gray-300">
-                      <Camera className="w-5 h-5" />
+                  <div className="p-6 space-y-3 z-10 text-center">
+                    <div className="w-12 h-12 bg-[#FFDE4D] border-2 border-black flex items-center justify-center mx-auto text-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                      <Camera className="w-6 h-6" />
                     </div>
-                    <h4 className="text-xs font-bold text-gray-200 font-sans">Kamera Belum Aktif</h4>
-                    <p className="text-[10px] text-gray-400 max-w-xs mx-auto font-sans leading-relaxed">
+                    <h4 className="text-xs font-black text-white uppercase tracking-wider">Kamera Belum Aktif</h4>
+                    <p className="text-[10px] text-gray-300 max-w-xs mx-auto leading-relaxed">
                       Silakan aktifkan kamera terlebih dahulu untuk melakukan swafoto presensi, atau gunakan tombol unggah manual di bawah.
                     </p>
                     <button
@@ -1008,7 +1008,7 @@ export default function AttendanceSystem({
                         setCameraError(null);
                         setCameraEnabled(true);
                       }}
-                      className="mt-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-extrabold transition-all inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
+                      className="mt-1 px-4 py-2 bg-[#39FF14] text-black border-2 border-black text-[10px] font-black uppercase tracking-wide shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <Camera className="w-3.5 h-3.5" />
                       Aktifkan Kamera
@@ -1016,10 +1016,10 @@ export default function AttendanceSystem({
                   </div>
                 ) : (
                   <div className="p-6 space-y-2">
-                    <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto text-white animate-pulse">
+                    <div className="w-12 h-12 bg-gray-900 border-2 border-gray-700 flex items-center justify-center mx-auto text-white animate-pulse">
                       <Camera className="w-5 h-5 animate-bounce" />
                     </div>
-                    <h4 className="text-xs font-bold text-gray-200">Mengaktifkan Kamera...</h4>
+                    <h4 className="text-xs font-black text-white uppercase tracking-wider">Mengaktifkan Kamera...</h4>
                     <p className="text-[10px] text-gray-400 max-w-xs mx-auto">Harap izinkan akses kamera langsung pada browser Anda untuk berswafoto.</p>
                   </div>
                 )}
@@ -1030,7 +1030,7 @@ export default function AttendanceSystem({
                     <button
                       type="button"
                       onClick={capturePhoto}
-                      className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                      className="px-6 py-2.5 bg-[#39FF14] hover:bg-[#2adb10] text-black border-2 border-black text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 cursor-pointer"
                     >
                       <Camera className="w-4 h-4" />
                       Ambil Foto
@@ -1043,7 +1043,7 @@ export default function AttendanceSystem({
                         setCameraError(null);
                         setCameraEnabled(true);
                       }}
-                      className="px-4 py-2 bg-gray-900/90 hover:bg-gray-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-sm shadow-sm cursor-pointer"
+                      className="px-4 py-2 bg-[#FF6B6B] hover:bg-[#ff5555] text-black border-2 border-black text-xs font-black uppercase transition-all flex items-center gap-1.5 shadow-[2px_2px_0px_rgba(0,0,0,1)] cursor-pointer"
                     >
                       <Camera className="w-4 h-4" />
                       Ambil Ulang Foto
@@ -1053,14 +1053,14 @@ export default function AttendanceSystem({
               </div>
               {cameraError && (
                 <div className="space-y-1 text-center">
-                  <p className="text-[11px] text-red-500 font-medium">{cameraError}</p>
+                  <p className="text-[11px] text-red-500 font-bold font-mono">{cameraError}</p>
                   <button
                     type="button"
                     onClick={() => {
                       setCameraError(null);
                       startCamera();
                     }}
-                    className="text-[10px] text-gray-900 font-bold hover:underline cursor-pointer inline-flex items-center gap-1"
+                    className="text-[10px] text-black font-black uppercase hover:underline cursor-pointer inline-flex items-center gap-1"
                   >
                     <RefreshCw className="w-3 h-3" /> Coba Aktifkan Kamera Lagi
                   </button>
@@ -1077,10 +1077,10 @@ export default function AttendanceSystem({
                   type="button"
                   onClick={handleClockIn}
                   disabled={!isWithinRadius || !capturedPhoto}
-                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  className={`flex-1 py-3 px-4 border-3 border-black font-black uppercase text-xs flex items-center justify-center gap-2 tracking-wider transition-all cursor-pointer ${
                     isWithinRadius && capturedPhoto
-                      ? 'bg-gray-900 text-white hover:bg-gray-800 shadow-md'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200/50'
+                      ? 'bg-[#39FF14] text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0'
+                      : 'bg-gray-200 text-black/40 border-black/20 cursor-not-allowed'
                   }`}
                 >
                   <LogIn className="w-4 h-4" />
@@ -1091,10 +1091,10 @@ export default function AttendanceSystem({
                   type="button"
                   onClick={handleClockOut}
                   disabled={!isWithinRadius || !capturedPhoto}
-                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  className={`flex-1 py-3 px-4 border-3 border-black font-black uppercase text-xs flex items-center justify-center gap-2 tracking-wider transition-all cursor-pointer ${
                     isWithinRadius && capturedPhoto
-                      ? 'bg-gray-900 text-white hover:bg-gray-800 shadow-md'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200/50'
+                      ? 'bg-[#39FF14] text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0'
+                      : 'bg-gray-200 text-black/40 border-black/20 cursor-not-allowed'
                   }`}
                 >
                   <LogOut className="w-4 h-4" />
@@ -1106,7 +1106,7 @@ export default function AttendanceSystem({
           
           {/* Geofence requirement reminder */}
           {(!todayRecord || (!todayRecord.clockOutTime && todayRecord.status !== 'Sakit' && todayRecord.status !== 'Izin')) && (presenceTab === 'hadir' || todayRecord) && (
-            <p className="text-[10px] text-gray-400 text-center leading-relaxed">
+            <p className="text-[10px] text-black/60 font-bold text-center leading-relaxed">
               * Tombol presensi hanya akan aktif apabila **foto telah dilampirkan** dan Anda terdeteksi berada **di dalam radius tempat kerja** ({officeLoc.radius} meter dari {officeLoc.name}).
             </p>
           )}
@@ -1117,63 +1117,63 @@ export default function AttendanceSystem({
           <div className="lg:col-span-5 flex flex-col gap-6">
             
             {/* Geolocation Status Card */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs space-y-4">
+            <div className="bg-[#FFFDF6] border-4 border-black p-6 shadow-[6px_6px_0px_rgba(0,0,0,1)] space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-gray-500" />
+                <h3 className="font-display font-black text-black uppercase text-sm flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-black" />
                   Status Geofencing Anda
                 </h3>
                 <button
                   type="button"
                   onClick={getGeoLocation}
                   disabled={isFetchingLocation}
-                  className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-500 hover:text-gray-800 transition-colors"
+                  className="p-1.5 border-2 border-black bg-white hover:bg-black/5 text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                   title="Penyegaran lokasi GPS"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isFetchingLocation ? 'animate-spin text-gray-800' : ''}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 ${isFetchingLocation ? 'animate-spin text-black font-black' : ''}`} />
                 </button>
               </div>
 
               {/* Workplace summary info */}
-              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs space-y-1.5">
+              <div className="bg-white border-2 border-black p-3.5 text-xs space-y-2 shadow-[2px_2px_0px_rgba(0,0,0,1)] font-bold text-black leading-relaxed">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Tempat Kerja:</span>
-                  <span className="font-semibold text-gray-800">{officeLoc.name}</span>
+                  <span className="text-black/60">Tempat Kerja:</span>
+                  <span className="font-extrabold">{officeLoc.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Koordinat Kantor:</span>
-                  <span className="font-mono text-gray-700">{officeLoc.latitude.toFixed(6)}, {officeLoc.longitude.toFixed(6)}</span>
+                  <span className="text-black/60">Koordinat Kantor:</span>
+                  <span className="font-mono text-black">{officeLoc.latitude.toFixed(6)}, {officeLoc.longitude.toFixed(6)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Radius Diizinkan:</span>
-                  <span className="font-semibold text-gray-800">{officeLoc.radius} Meter</span>
+                  <span className="text-black/60">Radius Diizinkan:</span>
+                  <span className="font-extrabold">{officeLoc.radius} Meter</span>
                 </div>
               </div>
 
               {/* Geolocation result */}
               {isFetchingLocation ? (
                 <div className="py-6 flex flex-col items-center justify-center text-center gap-2">
-                  <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
-                  <span className="text-xs text-gray-400">Mengambil sinyal GPS presisi...</span>
+                  <div className="w-8 h-8 border-4 border-black border-t-[#39FF14] rounded-full animate-spin" />
+                  <span className="text-xs font-bold text-black/70">Mengambil sinyal GPS presisi...</span>
                 </div>
               ) : locationError ? (
-                <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3 text-xs text-red-700">
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div className="bg-[#FF6B6B]/20 border-2 border-black p-4 flex gap-3 text-xs text-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                  <AlertCircle className="w-4 h-4 text-[#FF6B6B] shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <h5 className="font-bold">Gagal Mengunci Lokasi</h5>
-                    <p className="text-[11px] leading-relaxed text-red-600/90">{locationError}</p>
+                    <h5 className="font-black uppercase text-xs">Gagal Mengunci Lokasi</h5>
+                    <p className="text-[11px] leading-relaxed font-bold text-black/80">{locationError}</p>
                   </div>
                 </div>
               ) : currentCoords ? (
                 <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs space-y-1.5">
+                  <div className="bg-white border-2 border-black p-3 text-xs space-y-1.5 font-bold shadow-[2px_2px_0px_rgba(0,0,0,1)]">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Posisi GPS Anda:</span>
-                      <span className="font-mono text-gray-700">{currentCoords.latitude.toFixed(6)}, {currentCoords.longitude.toFixed(6)}</span>
+                      <span className="text-black/60">Posisi GPS Anda:</span>
+                      <span className="font-mono text-black">{currentCoords.latitude.toFixed(6)}, {currentCoords.longitude.toFixed(6)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-500">Jarak ke Kantor:</span>
-                      <span className={`font-bold text-xs ${isWithinRadius ? 'text-emerald-700' : 'text-amber-700'}`}>
+                      <span className="text-black/60">Jarak ke Kantor:</span>
+                      <span className={`font-black text-xs px-2 py-0.5 border border-black ${isWithinRadius ? 'bg-[#39FF14]' : 'bg-[#FF6B6B]'}`}>
                         {distance !== null ? `${distance} Meter` : 'Menghitung...'}
                       </span>
                     </div>
@@ -1181,47 +1181,47 @@ export default function AttendanceSystem({
 
                   {/* Radius verification badge */}
                   {isWithinRadius ? (
-                    <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-xl p-3.5 flex items-start gap-2 text-xs">
-                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div className="bg-[#39FF14]/30 border-2 border-black text-black p-3.5 flex items-start gap-2 text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                      <CheckCircle className="w-5 h-5 text-black shrink-0 mt-0.5" />
                       <div>
-                        <h5 className="font-bold">Siap untuk Presensi</h5>
-                        <p className="text-[11px] text-emerald-600/90 mt-0.5">Lokasi Anda terkunci di dalam radius kerja ({distance}m). Tombol presensi telah dibuka.</p>
+                        <h5 className="font-black uppercase text-xs">Siap untuk Presensi</h5>
+                        <p className="text-[11px] font-bold text-black/85 mt-0.5">Lokasi Anda terkunci di dalam radius kerja ({distance}m). Tombol presensi telah dibuka.</p>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-amber-50 border border-amber-100 text-amber-800 rounded-xl p-3.5 flex items-start gap-2 text-xs">
-                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="bg-[#FF6B6B]/20 border-2 border-black text-black p-3.5 flex items-start gap-2 text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                      <AlertCircle className="w-5 h-5 text-[#FF6B6B] shrink-0 mt-0.5" />
                       <div>
-                        <h5 className="font-bold">Berada di Luar Radius</h5>
-                        <p className="text-[11px] text-amber-600/90 mt-0.5">Anda saat ini berjarak {distance}m dari titik kantor. Silakan mendekat atau sesuaikan titik koordinat kantor jika diperlukan.</p>
+                        <h5 className="font-black uppercase text-xs">Berada di Luar Radius</h5>
+                        <p className="text-[11px] font-bold text-black/85 mt-0.5">Anda saat ini berjarak {distance}m dari titik kantor. Silakan mendekat atau sesuaikan titik koordinat kantor jika diperlukan.</p>
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-gray-400 text-center py-4">Tekan segarkan lokasi untuk mendapatkan GPS.</p>
+                <p className="text-xs font-bold text-black/60 text-center py-4">Tekan segarkan lokasi untuk mendapatkan GPS.</p>
               )}
             </div>
 
             {/* Minimalist SVG Coordinate Map Visualization */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex flex-col items-center">
-              <h4 className="text-xs font-semibold text-gray-800 self-start mb-3 flex items-center gap-1.5">
-                <Map className="w-4 h-4 text-gray-500" />
+            <div className="bg-white border-4 border-black p-5 shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col items-center">
+              <h4 className="text-xs font-black uppercase text-black self-start mb-3 flex items-center gap-1.5">
+                <Map className="w-4 h-4 text-black" />
                 Radar Jarak Lokasi Kerja
               </h4>
 
               {currentCoords ? (
-                <div className="w-full aspect-square max-w-[200px] relative border border-gray-100 bg-gray-50 rounded-full flex items-center justify-center p-4">
+                <div className="w-full aspect-square max-w-[200px] relative border-4 border-black bg-[#FFFDF6] rounded-full flex items-center justify-center p-4 shadow-[3px_3px_0px_rgba(0,0,0,1)]">
                   {/* Geofence Ring */}
-                  <div className="absolute w-[120px] h-[120px] rounded-full border border-gray-300 border-dashed animate-pulse bg-gray-100/50 flex items-center justify-center" />
+                  <div className="absolute w-[120px] h-[120px] rounded-full border-2 border-black border-dashed bg-black/5" />
                   
                   {/* Inner Ring */}
-                  <div className="absolute w-[60px] h-[60px] rounded-full border border-gray-200" />
+                  <div className="absolute w-[60px] h-[60px] rounded-full border border-black/15" />
 
                   {/* Center point - Office */}
                   <div className="absolute flex flex-col items-center z-10">
-                    <div className="w-4 h-4 rounded-full bg-gray-900 border-2 border-white shadow-sm flex items-center justify-center text-[7px] text-white font-bold">K</div>
-                    <span className="text-[8px] font-bold text-gray-600 mt-1 bg-white/80 px-1 rounded">Kantor</span>
+                    <div className="w-5 h-5 rounded-full bg-[#FFDE4D] border-2 border-black shadow-[1px_1px_0px_rgba(0,0,0,1)] flex items-center justify-center text-[8px] text-black font-black">K</div>
+                    <span className="text-[8px] font-black uppercase tracking-wide text-black mt-1 bg-white px-1.5 py-0.5 border border-black">Kantor</span>
                   </div>
 
                   {/* User point representation relative to distance */}
@@ -1235,13 +1235,13 @@ export default function AttendanceSystem({
                           : `translate(65px, -65px)`
                       }}
                     >
-                      <div className={`w-3.5 h-3.5 rounded-full border-2 border-white shadow-md ${isWithinRadius ? 'bg-emerald-600' : 'bg-amber-600 animate-ping'}`} />
-                      <span className="text-[8px] font-bold text-gray-600 mt-0.5 bg-white/80 px-1 rounded">Anda ({distance}m)</span>
+                      <div className={`w-4 h-4 rounded-full border-2 border-black shadow-[1px_1px_0px_rgba(0,0,0,1)] ${isWithinRadius ? 'bg-[#39FF14]' : 'bg-[#FF6B6B] animate-pulse'}`} />
+                      <span className="text-[8px] font-black text-black mt-0.5 bg-white px-1.5 py-0.5 border border-black">Anda ({distance}m)</span>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-xs text-gray-400">
+                <div className="h-[200px] flex items-center justify-center text-xs font-bold text-black/60">
                   Radar membutuhkan data lokasi GPS Anda.
                 </div>
               )}
@@ -1252,16 +1252,16 @@ export default function AttendanceSystem({
       </div>
 
       {/* Row: Historic Logs */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs space-y-4">
+      <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_rgba(0,0,0,1)] space-y-4">
         <div className="flex justify-between items-center flex-wrap gap-2">
-          <h3 className="font-semibold text-gray-900 text-base">Riwayat Presensi Magang</h3>
+          <h3 className="font-display font-black text-black uppercase text-base">Riwayat Presensi Magang</h3>
           {attendanceLogs.length > 0 && (
             <div className="flex items-center gap-2">
               <button
                 onClick={handleExportPDF}
-                className="px-3 py-1.5 text-[11px] font-bold text-gray-700 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs bg-white"
+                className="px-3.5 py-2 text-[11px] font-black uppercase tracking-wider text-black bg-[#FFDE4D] hover:bg-[#ffe366] border-2 border-black rounded-none transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0"
               >
-                <FileDown className="w-3.5 h-3.5 text-gray-500" />
+                <FileDown className="w-3.5 h-3.5 text-black" />
                 Ekspor PDF
               </button>
 
@@ -1271,7 +1271,7 @@ export default function AttendanceSystem({
                     attendanceLogs.forEach(log => onDeleteAttendance(log.id));
                   }
                 }}
-                className="px-3 py-1.5 text-[11px] font-bold text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200/40 rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 text-[11px] font-black uppercase tracking-wider text-black bg-[#FF6B6B] hover:bg-[#ff5555] border-2 border-black rounded-none transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Hapus Semua Riwayat
@@ -1281,79 +1281,79 @@ export default function AttendanceSystem({
         </div>
         
         {attendanceLogs.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-8">Belum ada riwayat kehadiran terekam. Mulai lakukan presensi masuk hari ini.</p>
+          <p className="text-xs font-bold text-black/60 text-center py-8">Belum ada riwayat kehadiran terekam. Mulai lakukan presensi masuk hari ini.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-collapse border-4 border-black">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  <th className="px-4 py-3">Tanggal</th>
-                  <th className="px-4 py-3 text-center">Foto Masuk</th>
-                  <th className="px-4 py-3">Jam Masuk</th>
-                  <th className="px-4 py-3">Jarak Masuk</th>
-                  <th className="px-4 py-3 text-center">Foto Pulang</th>
-                  <th className="px-4 py-3">Jam Pulang</th>
-                  <th className="px-4 py-3">Jarak Pulang</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Aksi</th>
+                <tr className="bg-[#FFDE4D] border-b-4 border-black text-[10px] font-black text-black uppercase tracking-wider">
+                  <th className="px-4 py-3.5 border-r-2 border-black">Tanggal</th>
+                  <th className="px-4 py-3.5 text-center border-r-2 border-black">Foto Masuk</th>
+                  <th className="px-4 py-3.5 border-r-2 border-black">Jam Masuk</th>
+                  <th className="px-4 py-3.5 border-r-2 border-black">Jarak Masuk</th>
+                  <th className="px-4 py-3.5 text-center border-r-2 border-black">Foto Pulang</th>
+                  <th className="px-4 py-3.5 border-r-2 border-black">Jam Pulang</th>
+                  <th className="px-4 py-3.5 border-r-2 border-black">Jarak Pulang</th>
+                  <th className="px-4 py-3.5 border-r-2 border-black">Status</th>
+                  <th className="px-4 py-3.5 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 text-gray-700">
+              <tbody className="divide-y-2 divide-black/10 text-black font-bold">
                 {attendanceLogs.map((log) => {
                   const dayFormat = new Date(log.date).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
                   const isSakitOrIzin = log.status === 'Sakit' || log.status === 'Izin';
                   
                   return (
-                    <tr key={log.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3.5 font-semibold text-gray-900">{dayFormat}</td>
-                      <td className="px-4 py-3.5 text-center">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 mx-auto bg-gray-50 flex items-center justify-center">
+                    <tr key={log.id} className="hover:bg-[#C3F2FF]/20 bg-white">
+                      <td className="px-4 py-3.5 font-extrabold text-black border-r-2 border-black/10">{dayFormat}</td>
+                      <td className="px-4 py-3.5 text-center border-r-2 border-black/10">
+                        <div className="w-12 h-12 border-2 border-black overflow-hidden mx-auto bg-gray-50 flex items-center justify-center shadow-[1px_1px_0px_rgba(0,0,0,1)]">
                           {log.clockInPhoto ? (
                             <img src={log.clockInPhoto} alt={isSakitOrIzin ? "Lampiran Bukti" : "Clock-In"} className="w-full h-full object-cover" />
                           ) : (
-                            <ImageIcon className="w-4 h-4 text-gray-300" />
+                            <ImageIcon className="w-4 h-4 text-black/40" />
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 font-mono">{isSakitOrIzin ? '-' : (log.clockInTime || '-')}</td>
-                      <td className="px-4 py-3.5 font-medium text-gray-500">{isSakitOrIzin ? '-' : (log.clockInDistance !== undefined ? `${log.clockInDistance} m` : '-')}</td>
-                      <td className="px-4 py-3.5 text-center">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 mx-auto bg-gray-50 flex items-center justify-center">
+                      <td className="px-4 py-3.5 font-mono border-r-2 border-black/10">{isSakitOrIzin ? '-' : (log.clockInTime || '-')}</td>
+                      <td className="px-4 py-3.5 font-mono text-black border-r-2 border-black/10">{isSakitOrIzin ? '-' : (log.clockInDistance !== undefined ? `${log.clockInDistance} m` : '-')}</td>
+                      <td className="px-4 py-3.5 text-center border-r-2 border-black/10">
+                        <div className="w-12 h-12 border-2 border-black overflow-hidden mx-auto bg-gray-50 flex items-center justify-center shadow-[1px_1px_0px_rgba(0,0,0,1)]">
                           {log.clockOutPhoto ? (
                             <img src={log.clockOutPhoto} alt="Clock-Out" className="w-full h-full object-cover" />
                           ) : (
-                            <ImageIcon className="w-4 h-4 text-gray-300" />
+                            <ImageIcon className="w-4 h-4 text-black/40" />
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 font-mono">{isSakitOrIzin ? '-' : (log.clockOutTime || '--:--:--')}</td>
-                      <td className="px-4 py-3.5 font-medium text-gray-500">
+                      <td className="px-4 py-3.5 font-mono border-r-2 border-black/10">{isSakitOrIzin ? '-' : (log.clockOutTime || '--:--:--')}</td>
+                      <td className="px-4 py-3.5 font-mono text-black border-r-2 border-black/10">
                         {isSakitOrIzin ? '-' : (log.clockOutDistance !== undefined ? `${log.clockOutDistance} m` : '-')}
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3.5 border-r-2 border-black/10">
                         {log.status === 'Sakit' ? (
-                          <div className="space-y-0.5">
-                            <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border bg-rose-50 text-rose-700 border-rose-100">
+                          <div className="space-y-1">
+                            <span className="inline-block px-2.5 py-1 text-[9px] font-black border-2 border-black bg-[#FF6B6B] text-black uppercase tracking-wider">
                               Sakit
                             </span>
-                            <div className="text-[10px] text-rose-600 font-medium max-w-[150px] truncate" title={log.notes}>
+                            <div className="text-[10px] font-bold text-black/85 max-w-[150px] truncate" title={log.notes}>
                               {log.notes}
                             </div>
                           </div>
                         ) : log.status === 'Izin' ? (
-                          <div className="space-y-0.5">
-                            <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border bg-amber-50 text-amber-700 border-amber-100">
+                          <div className="space-y-1">
+                            <span className="inline-block px-2.5 py-1 text-[9px] font-black border-2 border-black bg-[#FFDE4D] text-black uppercase tracking-wider">
                               Izin
                             </span>
-                            <div className="text-[10px] text-amber-600 font-medium max-w-[150px] truncate" title={log.notes}>
+                            <div className="text-[10px] font-bold text-black/85 max-w-[150px] truncate" title={log.notes}>
                               {log.notes}
                             </div>
                           </div>
                         ) : (
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                          <span className={`inline-block px-2.5 py-1 text-[9px] font-black border-2 border-black uppercase tracking-wider ${
                             log.clockOutTime 
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                              : 'bg-blue-50 text-blue-700 border-blue-100'
+                              ? 'bg-[#39FF14] text-black' 
+                              : 'bg-[#C3F2FF] text-black'
                           }`}>
                             {log.clockOutTime ? 'Selesai Kerja' : 'Sedang Kerja'}
                           </span>
@@ -1366,10 +1366,10 @@ export default function AttendanceSystem({
                               onDeleteAttendance(log.id);
                             }
                           }}
-                          className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors inline-flex items-center"
+                          className="p-1.5 border-2 border-black bg-[#FF6B6B] hover:bg-[#ff5555] text-black hover:shadow-[1px_1px_0px_rgba(0,0,0,1)] cursor-pointer transition-all inline-flex items-center"
                           title="Hapus Presensi"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4 text-black" />
                         </button>
                       </td>
                     </tr>

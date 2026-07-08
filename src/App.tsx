@@ -8,11 +8,9 @@ import { LogEntry, InternshipInfo, NotificationSettings as SettingsType, Attenda
 import Dashboard from './components/Dashboard';
 import LogbookForm from './components/LogbookForm';
 import LogbookList from './components/LogbookList';
-import NotificationSettings from './components/NotificationSettings';
 import BackupSettings from './components/BackupSettings';
 import AttendanceSystem from './components/AttendanceSystem';
 import AuthScreen from './components/AuthScreen';
-import { checkAndTriggerReminder } from './utils/notification';
 import { getFirestoreUserData, saveFirestoreUserData, getFirestoreUser } from './lib/dbService';
 import { 
   LayoutDashboard, 
@@ -69,7 +67,7 @@ export default function App() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [officeLoc, setOfficeLoc] = useState<OfficeLocation>(DEFAULT_OFFICE);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'logbook' | 'tambah' | 'presensi' | 'notifikasi' | 'profil'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'logbook' | 'tambah' | 'presensi' | 'profil'>('dashboard');
   const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
 
   // Firestore synchronization states
@@ -276,29 +274,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [logs, info, notifSettings, attendance, officeLoc, currentUser, isFetchedFromFirestore]);
 
-  // 3. Background timer check for notifications (every 30 seconds)
-  useEffect(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const hasFilledToday = logs.some(l => l.date === todayStr);
-
-    const checkInterval = setInterval(() => {
-      const result = checkAndTriggerReminder(
-        notifSettings,
-        hasFilledToday,
-        (title, body) => {
-          // Callback for showing in-app notification banner
-          setInAppAlert({ show: true, title, body });
-        }
-      );
-
-      if (result.triggered && result.updatedSettings) {
-        setNotifSettings(result.updatedSettings);
-      }
-    }, 30000); // Check every 30 seconds
-
-    return () => clearInterval(checkInterval);
-  }, [notifSettings, logs]);
-
   // 4. Save Logbook entries handler
   const handleSaveLog = (newLogData: Omit<LogEntry, 'id'> & { id?: string }) => {
     if (newLogData.id) {
@@ -381,30 +356,30 @@ export default function App() {
   };
 
   return (
-    <div id="yati-magang-root" className="min-h-screen bg-gray-50/50 flex flex-col font-sans antialiased text-gray-800">
+    <div id="yati-magang-root" className="min-h-screen bg-[#FFFDF6] flex flex-col font-sans antialiased text-black">
       {/* 1. Interactive In-App Notification Toast */}
       {inAppAlert.show && (
-        <div className="fixed top-6 right-6 left-6 md:left-auto md:w-96 bg-gray-900 text-white rounded-2xl p-5 border border-gray-800 shadow-2xl z-50 animate-fadeIn flex flex-col gap-3">
+        <div className="fixed top-6 right-6 left-6 md:left-auto md:w-96 bg-[#FFDE4D] text-black border-4 border-black p-5 shadow-[6px_6px_0px_rgba(0,0,0,1)] z-50 animate-fadeIn flex flex-col gap-3">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2.5">
-              <span className="text-xl">📝</span>
-              <h4 className="font-bold text-sm text-white">{inAppAlert.title}</h4>
+              <span className="text-2xl">⚡</span>
+              <h4 className="font-display font-extrabold text-sm uppercase tracking-wide text-black">{inAppAlert.title}</h4>
             </div>
             <button 
               onClick={() => setInAppAlert(prev => ({ ...prev, show: false }))}
-              className="p-1 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white"
+              className="p-1 border-2 border-black bg-white hover:bg-[#FF6B6B] transition-all"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 text-black" />
             </button>
           </div>
-          <p className="text-xs text-gray-300 leading-relaxed">{inAppAlert.body}</p>
+          <p className="text-xs font-bold font-sans text-black leading-relaxed">{inAppAlert.body}</p>
           <div className="flex justify-end gap-2 pt-1.5">
             <button
               onClick={() => {
                 setInAppAlert(prev => ({ ...prev, show: false }));
                 handleQuickAdd();
               }}
-              className="px-3.5 py-1.5 bg-white text-gray-900 rounded-lg text-xs font-bold hover:bg-gray-100"
+              className="px-4 py-2 bg-[#FF6B6B] hover:bg-[#ff5555] text-black border-2 border-black text-xs font-extrabold shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
             >
               Isi Sekarang
             </button>
@@ -413,26 +388,28 @@ export default function App() {
       )}
 
       {/* 2. Web App Bar (Navigation & Logo) */}
-      <header className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-100 z-40">
+      <header className="sticky top-0 bg-white border-b-4 border-black z-40 shadow-[0_4px_0px_rgba(0,0,0,1)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-16 flex items-center justify-between gap-4">
+          <div className="h-20 flex items-center justify-between gap-4">
             {/* Logo Brand */}
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gray-900 flex items-center justify-center text-white font-mono font-bold tracking-tight">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 border-3 border-black bg-[#FFDE4D] flex items-center justify-center text-black font-display font-extrabold text-xl shadow-[3px_3px_0px_rgba(0,0,0,1)]">
                 Y
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-base text-gray-900 tracking-tight">Yati Magang</span>
-                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Logbook & Dashboard</span>
+                <span className="font-display font-extrabold text-lg text-black uppercase tracking-tight">Yati Magang</span>
+                <span className="text-[9px] font-mono font-extrabold text-[#A259FF] uppercase tracking-wider bg-purple-100 border border-black px-1 py-0.5 rounded-sm">Logbook & Dashboard</span>
               </div>
             </div>
 
             {/* Tablet/Desktop Navigation tabs */}
-            <nav className="hidden md:flex items-center gap-1.5">
+            <nav className="hidden md:flex items-center gap-2">
               <button
                 onClick={() => { setActiveTab('dashboard'); setEditingLog(null); }}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'dashboard' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                className={`inline-flex items-center gap-2 px-3.5 py-2 border-2 text-xs font-extrabold uppercase tracking-wide transition-all cursor-pointer ${
+                  activeTab === 'dashboard' 
+                    ? 'bg-[#FF6B6B] text-black border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]' 
+                    : 'border-transparent text-gray-700 hover:bg-black/5 hover:border-black/20'
                 }`}
               >
                 <LayoutDashboard className="w-3.5 h-3.5" />
@@ -441,18 +418,22 @@ export default function App() {
 
               <button
                 onClick={() => { setActiveTab('logbook'); setEditingLog(null); }}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'logbook' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                className={`inline-flex items-center gap-2 px-3.5 py-2 border-2 text-xs font-extrabold uppercase tracking-wide transition-all cursor-pointer ${
+                  activeTab === 'logbook' 
+                    ? 'bg-[#FFDE4D] text-black border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]' 
+                    : 'border-transparent text-gray-700 hover:bg-black/5 hover:border-black/20'
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                Catatan Logbook
+                Logbook
               </button>
 
               <button
                 onClick={() => { setActiveTab('presensi'); setEditingLog(null); }}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'presensi' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                className={`inline-flex items-center gap-2 px-3.5 py-2 border-2 text-xs font-extrabold uppercase tracking-wide transition-all cursor-pointer ${
+                  activeTab === 'presensi' 
+                    ? 'bg-[#39FF14] text-black border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]' 
+                    : 'border-transparent text-gray-700 hover:bg-black/5 hover:border-black/20'
                 }`}
               >
                 <UserCheck className="w-3.5 h-3.5" />
@@ -460,63 +441,54 @@ export default function App() {
               </button>
 
               <button
-                onClick={() => { setActiveTab('notifikasi'); setEditingLog(null); }}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'notifikasi' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
-                }`}
-              >
-                <Bell className="w-3.5 h-3.5" />
-                Pengingat
-                {notifSettings.enabled && <span className="w-1.5 h-1.5 rounded-full bg-gray-900"></span>}
-              </button>
-
-              <button
                 onClick={() => { setActiveTab('profil'); setEditingLog(null); }}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'profil' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                className={`inline-flex items-center gap-2 px-3.5 py-2 border-2 text-xs font-extrabold uppercase tracking-wide transition-all cursor-pointer ${
+                  activeTab === 'profil' 
+                    ? 'bg-[#C3F2FF] text-black border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]' 
+                    : 'border-transparent text-gray-700 hover:bg-black/5 hover:border-black/20'
                 }`}
               >
                 <Settings className="w-3.5 h-3.5" />
-                Profil & Backup
+                Profil
               </button>
             </nav>
 
             {/* Profile Quick indicator (Right) */}
             <div className="hidden sm:flex items-center gap-3">
               {/* Syncing Status Indicator */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-50 border border-gray-100">
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
                 {isSyncing ? (
                   <>
-                    <CloudLightning className="w-3.5 h-3.5 animate-pulse text-gray-500" />
-                    <span className="text-[10px] font-semibold text-gray-500">Sinkron...</span>
+                    <CloudLightning className="w-3.5 h-3.5 animate-pulse text-[#A259FF]" />
+                    <span className="text-[10px] font-extrabold text-black uppercase font-mono">SINKRON...</span>
                   </>
                 ) : syncError ? (
                   <>
-                    <CloudOff className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
-                    <span className="text-[10px] font-semibold text-rose-500">Offline Caching</span>
+                    <CloudOff className="w-3.5 h-3.5 text-[#FF6B6B] animate-pulse" />
+                    <span className="text-[10px] font-extrabold text-[#FF6B6B] uppercase font-mono">LOKAL CACHE</span>
                   </>
                 ) : (
                   <>
-                    <Cloud className="w-3.5 h-3.5 text-emerald-500" />
-                    <span className="text-[10px] font-semibold text-emerald-600">Tersinkron Cloud</span>
+                    <Cloud className="w-3.5 h-3.5 text-[#6BCB77]" />
+                    <span className="text-[10px] font-extrabold text-[#6BCB77] uppercase font-mono">TERSINKRON</span>
                   </>
                 )}
               </div>
 
               <div className="text-right flex flex-col">
-                <span className="text-xs font-bold text-gray-800">{info.studentName || 'Mahasiswa'}</span>
-                <span className="text-[9px] text-gray-400 font-mono">{info.institution || 'Belum diatur'}</span>
+                <span className="text-xs font-black uppercase tracking-tight text-black">{info.studentName || 'Mahasiswa'}</span>
+                <span className="text-[9px] font-mono text-black font-semibold uppercase">{info.institution || 'Belum diatur'}</span>
               </div>
-              <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-xs text-gray-600">
+              <div className="w-9 h-9 bg-[#A259FF] border-2 border-black flex items-center justify-center font-display font-black text-sm text-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
                 {info.studentName ? info.studentName.charAt(0) : 'M'}
               </div>
               
-              <div className="h-5 w-[1px] bg-gray-150 mx-1"></div>
+              <div className="h-6 w-0.5 bg-black mx-1"></div>
               
               <button
                 onClick={handleLogout}
                 title="Keluar Akun"
-                className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
+                className="p-2 border-2 border-black bg-[#FF6B6B]/20 hover:bg-[#FF6B6B] text-black hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -526,7 +498,7 @@ export default function App() {
       </header>
 
       {/* 3. Main Dashboard Stage */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-16 md:mb-0">
         <div className="animate-fadeIn">
           {activeTab === 'dashboard' && (
             <Dashboard 
@@ -556,13 +528,6 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'notifikasi' && (
-            <NotificationSettings 
-              settings={notifSettings} 
-              onUpdateSettings={setNotifSettings}
-            />
-          )}
-
           {activeTab === 'presensi' && (
             <AttendanceSystem 
               attendanceLogs={attendance}
@@ -588,66 +553,64 @@ export default function App() {
       </main>
 
       {/* 4. Mobile Bottom Toolbar (Fixed Bottom for Handphone access) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-50 flex items-center justify-around shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-3 border-black px-4 py-3.5 z-50 flex items-center justify-around shadow-[0_-3px_0px_rgba(0,0,0,1)]">
         <button
           onClick={() => { setActiveTab('dashboard'); setEditingLog(null); }}
-          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${
-            activeTab === 'dashboard' ? 'text-gray-900 font-semibold' : 'text-gray-400 hover:text-gray-600'
+          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+            activeTab === 'dashboard' 
+              ? 'text-black font-black scale-105 bg-[#FF6B6B] border-2 border-black p-1.5 shadow-[2px_2px_0px_rgba(0,0,0,1)]' 
+              : 'text-gray-700 hover:text-black p-1.5'
           }`}
         >
           <LayoutDashboard className="w-5 h-5" />
-          <span className="text-[10px]">Dashboard</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Dashboard</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('logbook'); setEditingLog(null); }}
-          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${
-            activeTab === 'logbook' ? 'text-gray-900 font-semibold' : 'text-gray-400 hover:text-gray-600'
+          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+            activeTab === 'logbook' 
+              ? 'text-black font-black scale-105 bg-[#FFDE4D] border-2 border-black p-1.5 shadow-[2px_2px_0px_rgba(0,0,0,1)]' 
+              : 'text-gray-700 hover:text-black p-1.5'
           }`}
         >
           <BookOpen className="w-5 h-5" />
-          <span className="text-[10px]">Logbook</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Logbook</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('presensi'); setEditingLog(null); }}
-          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${
-            activeTab === 'presensi' ? 'text-gray-900 font-semibold' : 'text-gray-400 hover:text-gray-600'
+          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+            activeTab === 'presensi' 
+              ? 'text-black font-black scale-105 bg-[#39FF14] border-2 border-black p-1.5 shadow-[2px_2px_0px_rgba(0,0,0,1)]' 
+              : 'text-gray-700 hover:text-black p-1.5'
           }`}
         >
           <UserCheck className="w-5 h-5" />
-          <span className="text-[10px]">Presensi</span>
-        </button>
-
-        <button
-          onClick={() => { setActiveTab('notifikasi'); setEditingLog(null); }}
-          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${
-            activeTab === 'notifikasi' ? 'text-gray-900 font-semibold' : 'text-gray-400 hover:text-gray-600'
-          }`}
-        >
-          <Bell className="w-5 h-5" />
-          <span className="text-[10px]">Notifikasi</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Presensi</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('profil'); setEditingLog(null); }}
-          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${
-            activeTab === 'profil' ? 'text-gray-900 font-semibold' : 'text-gray-400 hover:text-gray-600'
+          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+            activeTab === 'profil' 
+              ? 'text-black font-black scale-105 bg-[#C3F2FF] border-2 border-black p-1.5 shadow-[2px_2px_0px_rgba(0,0,0,1)]' 
+              : 'text-gray-700 hover:text-black p-1.5'
           }`}
         >
           <Settings className="w-5 h-5" />
-          <span className="text-[10px]">Profil</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Profil</span>
         </button>
       </div>
 
       {/* 5. Simple Footer */}
-      <footer className="bg-white border-t border-gray-100 py-6 text-center text-[11px] text-gray-400 px-4 mt-12 pb-24 md:pb-6">
+      <footer className="bg-white border-t-4 border-black py-8 text-center text-xs font-mono font-bold text-black px-4 mt-12 pb-28 md:pb-8 shadow-[0_-4px_0px_rgba(0,0,0,1)]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© 2026 Yati Magang. Semua data tersimpan aman secara lokal di peramban Anda.</p>
+          <p>© 2026 Yati Magang. Semua data tersimpan aman secara terenkripsi di database cloud.</p>
           <div className="flex gap-4">
-            <a href="#dashboard-container" className="hover:text-gray-600 transition-colors">Syarat Penggunaan</a>
+            <a href="#dashboard-container" className="hover:underline decoration-2 decoration-[#FF6B6B] transition-colors">Syarat Penggunaan</a>
             <span>•</span>
-            <a href="#dashboard-container" className="hover:text-gray-600 transition-colors">Kebijakan Privasi</a>
+            <a href="#dashboard-container" className="hover:underline decoration-2 decoration-[#FF6B6B] transition-colors">Kebijakan Privasi</a>
           </div>
         </div>
       </footer>

@@ -202,44 +202,44 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
   };
 
   return (
-    <div id="auth-screen-container" className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans antialiased">
+    <div id="auth-screen-container" className="min-h-screen bg-[#FFFDF6] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans antialiased text-black relative overflow-hidden">
+      {/* Neo-brutalist background decorative circles */}
+      <div className="absolute top-10 left-10 w-32 h-32 rounded-full border-4 border-black bg-[#FF5C8A] -z-10 opacity-30 pointer-events-none"></div>
+      <div className="absolute bottom-10 right-10 w-48 h-48 rounded-full border-4 border-black bg-[#39FF14] -z-10 opacity-20 pointer-events-none"></div>
+      <div className="absolute top-1/3 right-1/4 w-12 h-12 border-4 border-black bg-[#A259FF] -z-10 opacity-30 transform rotate-12 pointer-events-none"></div>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Brand/Logo Header */}
         <div className="flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gray-900 flex items-center justify-center text-white font-mono font-bold text-2xl shadow-xl shadow-gray-200 mb-4 animate-bounce">
+          <div className="w-16 h-16 border-4 border-black bg-[#FFDE4D] flex items-center justify-center text-black font-display font-extrabold text-3xl shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-4">
             Y
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h2 className="text-3xl font-display font-extrabold text-black tracking-tight uppercase">
             Yati Magang
           </h2>
-          <p className="mt-1.5 text-xs font-semibold text-gray-400 uppercase tracking-widest">
-            Logbook & Dashboard Presensi
+          <p className="mt-2 text-xs font-mono font-bold text-black border-2 border-black bg-[#C3F2FF] px-3 py-1.5 shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase tracking-wider">
+            LOGBOOK & DASHBOARD PRESENSI
           </p>
         </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white/80 backdrop-blur-md py-8 px-6 sm:px-10 rounded-3xl shadow-xl shadow-gray-100/70 border border-gray-100/50">
+        <div className="bg-white py-8 px-6 sm:px-10 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]">
           
-          {/* Custom Tabs Switcher with Motion */}
-          <div className="flex bg-gray-50 p-1 rounded-2xl mb-8 relative z-0">
+          {/* Custom Tabs Switcher */}
+          <div className="flex bg-[#F3EFE0] border-3 border-black p-1 mb-8 relative z-0">
             <button
               onClick={() => {
                 setIsLogin(true);
                 setError(null);
                 setSuccess(null);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer relative ${
-                isLogin ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-extrabold border-2 transition-all cursor-pointer ${
+                isLogin 
+                  ? 'bg-[#A259FF] text-black border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]' 
+                  : 'border-transparent text-gray-600 hover:text-black hover:bg-black/5'
               }`}
             >
-              {isLogin && (
-                <motion.div
-                  layoutId="active-tab"
-                  className="absolute inset-0 bg-white rounded-xl shadow-xs border border-gray-100 -z-10"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                />
-              )}
               <LogIn className="w-3.5 h-3.5" />
               Masuk
             </button>
@@ -249,17 +249,12 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                 setError(null);
                 setSuccess(null);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer relative ${
-                !isLogin ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-extrabold border-2 transition-all cursor-pointer ${
+                !isLogin 
+                  ? 'bg-[#A259FF] text-black border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]' 
+                  : 'border-transparent text-gray-600 hover:text-black hover:bg-black/5'
               }`}
             >
-              {!isLogin && (
-                <motion.div
-                  layoutId="active-tab"
-                  className="absolute inset-0 bg-white rounded-xl shadow-xs border border-gray-100 -z-10"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                />
-              )}
               <UserPlus className="w-3.5 h-3.5" />
               Daftar Baru
             </button>
@@ -270,9 +265,9 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
             <motion.div 
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-700 flex gap-3 items-start text-xs leading-relaxed"
+              className="mb-6 p-4 bg-[#FF6B6B] border-3 border-black text-black flex gap-3 items-start text-xs font-bold leading-relaxed shadow-[3px_3px_0px_rgba(0,0,0,1)]"
             >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-black" />
               <span>{error}</span>
             </motion.div>
           )}
@@ -281,9 +276,9 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
             <motion.div 
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 flex gap-3 items-start text-xs leading-relaxed"
+              className="mb-6 p-4 bg-[#6BCB77] border-3 border-black text-black flex gap-3 items-start text-xs font-bold leading-relaxed shadow-[3px_3px_0px_rgba(0,0,0,1)]"
             >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-black" />
               <span>{success}</span>
             </motion.div>
           )}
@@ -292,9 +287,9 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
             /* LOGIN FORM */
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Username</label>
+                <label className="text-xs font-extrabold text-black uppercase tracking-wider block mb-2 font-display">Username</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-black">
                     <User className="w-4 h-4" />
                   </div>
                   <input
@@ -304,15 +299,15 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Masukkan username Anda"
-                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
+                    className="block w-full pl-10 pr-4 py-3 bg-white border-3 border-black text-xs font-bold text-black placeholder-gray-500 focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:bg-[#FFFDF6] transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Password</label>
+                <label className="text-xs font-extrabold text-black uppercase tracking-wider block mb-2 font-display">Password</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-black">
                     <Lock className="w-4 h-4" />
                   </div>
                   <input
@@ -322,7 +317,7 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Masukkan password Anda"
-                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
+                    className="block w-full pl-10 pr-4 py-3 bg-white border-3 border-black text-xs font-bold text-black placeholder-gray-500 focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:bg-[#FFFDF6] transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -330,11 +325,11 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 bg-gray-900 text-white rounded-2xl text-xs font-bold hover:bg-gray-850 active:scale-98 transition-all shadow-md shadow-gray-900/10 cursor-pointer mt-2 disabled:opacity-75 disabled:cursor-not-allowed"
+                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 bg-[#FF6B6B] hover:bg-[#ff5555] text-black border-3 border-black font-extrabold shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all cursor-pointer mt-4 disabled:opacity-75 disabled:cursor-not-allowed"
               >
                 {isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-black" />
                     Memproses Masuk...
                   </>
                 ) : (
@@ -349,9 +344,9 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
             /* REGISTER FORM */
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Username *</label>
+                <label className="text-xs font-extrabold text-black uppercase tracking-wider block mb-2 font-display">Username *</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-black">
                     <User className="w-4 h-4" />
                   </div>
                   <input
@@ -361,16 +356,16 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                     value={username}
                     onChange={(e) => setUsername(e.target.value.replace(/\s+/g, ''))}
                     placeholder="Pilih username unik (tanpa spasi)"
-                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
+                    className="block w-full pl-10 pr-4 py-3 bg-white border-3 border-black text-xs font-bold text-black placeholder-gray-500 focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:bg-[#FFFDF6] transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Password *</label>
+                  <label className="text-xs font-extrabold text-black uppercase tracking-wider block mb-2 font-display">Password *</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-black">
                       <Lock className="w-4 h-4" />
                     </div>
                     <input
@@ -380,15 +375,15 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Min. 4 karakter"
-                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
+                      className="block w-full pl-10 pr-4 py-3 bg-white border-3 border-black text-xs font-bold text-black placeholder-gray-500 focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:bg-[#FFFDF6] transition-all disabled:opacity-60"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Konfirmasi Password *</label>
+                  <label className="text-xs font-extrabold text-black uppercase tracking-wider block mb-2 font-display">Konfirmasi Password *</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-black">
                       <Lock className="w-4 h-4" />
                     </div>
                     <input
@@ -398,16 +393,16 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Ulangi password"
-                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
+                      className="block w-full pl-10 pr-4 py-3 bg-white border-3 border-black text-xs font-bold text-black placeholder-gray-500 focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:bg-[#FFFDF6] transition-all disabled:opacity-60"
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Nama Lengkap Mahasiswa *</label>
+                <label className="text-xs font-extrabold text-black uppercase tracking-wider block mb-2 font-display">Nama Lengkap Mahasiswa *</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-black">
                     <GraduationCap className="w-4 h-4" />
                   </div>
                   <input
@@ -417,15 +412,15 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                     value={studentName}
                     onChange={(e) => setStudentName(e.target.value)}
                     placeholder="Contoh: Yati Amalia"
-                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
+                    className="block w-full pl-10 pr-4 py-3 bg-white border-3 border-black text-xs font-bold text-black placeholder-gray-500 focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:bg-[#FFFDF6] transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Instansi / Universitas *</label>
+                <label className="text-xs font-extrabold text-black uppercase tracking-wider block mb-2 font-display">Instansi / Universitas *</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-black">
                     <Building className="w-4 h-4" />
                   </div>
                   <input
@@ -434,17 +429,17 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                     disabled={isPending}
                     value={institution}
                     onChange={(e) => setInstitution(e.target.value)}
-                    placeholder="Contoh: Universitas Lambung Mangkurat"
-                    className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
+                    placeholder="Contoh: Universitas Lambung Mangkura"
+                    className="block w-full pl-10 pr-4 py-3 bg-white border-3 border-black text-xs font-bold text-black placeholder-gray-500 focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:bg-[#FFFDF6] transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Posisi Magang</label>
+                  <label className="text-xs font-extrabold text-black uppercase tracking-wider block mb-2 font-display">Posisi Magang</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-black">
                       <Award className="w-4 h-4" />
                     </div>
                     <input
@@ -453,15 +448,15 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                       value={position}
                       onChange={(e) => setPosition(e.target.value)}
                       placeholder="Contoh: Staf IT Developer Intern"
-                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
+                      className="block w-full pl-10 pr-4 py-3 bg-white border-3 border-black text-xs font-bold text-black placeholder-gray-500 focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:bg-[#FFFDF6] transition-all disabled:opacity-60"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Tempat Magang *</label>
+                  <label className="text-xs font-extrabold text-black uppercase tracking-wider block mb-2 font-display">Tempat Magang *</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-black">
                       <Building className="w-4 h-4" />
                     </div>
                     <input
@@ -471,7 +466,7 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       placeholder="Contoh: Bank Kalsel Kantor Pusat"
-                      className="block w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 focus:bg-white transition-all disabled:opacity-60"
+                      className="block w-full pl-10 pr-4 py-3 bg-white border-3 border-black text-xs font-bold text-black placeholder-gray-500 focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_rgba(0,0,0,1)] focus:bg-[#FFFDF6] transition-all disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -480,11 +475,11 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 bg-gray-900 text-white rounded-2xl text-xs font-bold hover:bg-gray-850 active:scale-98 transition-all shadow-md shadow-gray-900/10 cursor-pointer mt-4 disabled:opacity-75 disabled:cursor-not-allowed"
+                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 bg-[#FF6B6B] hover:bg-[#ff5555] text-black border-3 border-black font-extrabold shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all cursor-pointer mt-4 disabled:opacity-75 disabled:cursor-not-allowed"
               >
                 {isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-black" />
                     Memproses Pendaftaran...
                   </>
                 ) : (
@@ -497,9 +492,9 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
             </form>
           )}
 
-          <div className="mt-6 text-center">
-            <p className="text-[10px] text-gray-400 leading-relaxed">
-              * Data pendaftaran disimpan secara aman di database cloud (Firestore) sehingga Anda dapat masuk dari perangkat mana pun (seperti HP) secara otomatis.
+          <div className="mt-6 text-center border-t-2 border-dashed border-black pt-5">
+            <p className="text-[10px] font-bold text-black uppercase tracking-wider leading-relaxed">
+              * Data pendaftaran disimpan secara aman di database cloud (Firestore). Anda dapat masuk dari HP & Laptop secara otomatis.
             </p>
           </div>
 

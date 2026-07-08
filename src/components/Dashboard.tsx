@@ -60,20 +60,20 @@ export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateT
   const maxWeeklyMinutes = Math.max(...weeklyData.map(d => d.minutes), 480); // scale bar height (default 480 mins)
 
   return (
-    <div id="dashboard-container" className="space-y-8">
+    <div id="dashboard-container" className="space-y-8 text-black font-sans">
       {/* Header Profile Summary */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xs">
+      <div className="bg-[#FFDE4D] border-4 border-black p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[6px_6px_0px_rgba(0,0,0,1)]">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 text-xs font-medium px-3 py-1 rounded-full">
-            <Sparkles className="w-3 h-3 text-gray-500" />
+          <div className="inline-flex items-center gap-2 bg-white text-black text-xs font-black border-2 border-black px-3 py-1 shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 text-black shrink-0" />
             <span>Dashboard Magang Mahasiswa</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-gray-900">
-            Halo, {info.studentName || 'Mahasiswa Magang'}!
+          <h1 className="text-2xl md:text-3xl font-display font-black tracking-tight text-black">
+            HALO, {info.studentName || 'MAHASISWA MAGANG'}!
           </h1>
-          <p className="text-sm text-gray-500">
-            {info.position ? `${info.position} ` : ''} 
-            {info.companyName ? `di ${info.companyName}` : 'Pencatatan Logbook Harian'}
+          <p className="text-sm font-bold text-black/80 font-mono">
+            {info.position ? `${info.position.toUpperCase()} ` : ''} 
+            {info.companyName ? `DI ${info.companyName.toUpperCase()}` : 'PENCATATAN LOGBOOK HARIAN'}
           </p>
         </div>
         
@@ -81,14 +81,14 @@ export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateT
           <button
             id="quick-add-log-btn"
             onClick={() => onNavigateToForm()}
-            className="inline-flex items-center justify-center bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors cursor-pointer shadow-xs"
+            className="inline-flex items-center justify-center bg-[#FF6B6B] hover:bg-[#ff5555] text-black text-xs font-black uppercase tracking-wider px-5 py-3 border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
           >
             + Tambah Logbook
           </button>
           <button
             id="view-all-logs-btn"
             onClick={onNavigateToList}
-            className="inline-flex items-center justify-center bg-white border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer"
+            className="inline-flex items-center justify-center bg-[#C3F2FF] hover:bg-[#b0ebff] text-black text-xs font-black uppercase tracking-wider px-5 py-3 border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
           >
             Lihat Semua Log
           </button>
@@ -98,57 +98,57 @@ export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateT
       {/* Grid Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Stat 1: Total Hours */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-200 cursor-default">
-          <div className="p-3 bg-gray-50 rounded-xl text-gray-600">
+        <div className="bg-white border-4 border-black p-5 shadow-[4px_4px_0px_rgba(0,0,0,1)] flex items-start gap-4 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all duration-200 cursor-default">
+          <div className="p-3 bg-[#DFCCFB] border-2 border-black text-black shadow-[1px_1px_0px_rgba(0,0,0,1)]">
             <Clock className="w-5 h-5" />
           </div>
           <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Total Durasi</span>
-            <span className="text-2xl font-semibold text-gray-900">{totalMinutes} <span className="text-sm font-normal text-gray-500">Menit</span></span>
-            <span className="text-[10px] text-gray-400 block">Rerata {avgMinutes} menit / hari</span>
+            <span className="text-xs font-display font-black text-black/60 uppercase tracking-wider block">Total Durasi</span>
+            <span className="text-2xl font-display font-black text-black">{totalMinutes} <span className="text-sm font-bold font-mono text-black/70">Menit</span></span>
+            <span className="text-[10px] font-bold font-mono text-black/60 block">Rerata {avgMinutes} menit / hari</span>
           </div>
         </div>
 
         {/* Stat 2: Total Active Days */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-200 cursor-default">
-          <div className="p-3 bg-gray-50 rounded-xl text-gray-600">
+        <div className="bg-white border-4 border-black p-5 shadow-[4px_4px_0px_rgba(0,0,0,1)] flex items-start gap-4 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all duration-200 cursor-default">
+          <div className="p-3 bg-[#C3F2FF] border-2 border-black text-black shadow-[1px_1px_0px_rgba(0,0,0,1)]">
             <Calendar className="w-5 h-5" />
           </div>
           <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Hari Tercatat</span>
-            <span className="text-2xl font-semibold text-gray-900">{totalDays} <span className="text-sm font-normal text-gray-500">Hari</span></span>
-            <span className="text-[10px] text-gray-400 block">Dari target periode</span>
+            <span className="text-xs font-display font-black text-black/60 uppercase tracking-wider block">Hari Tercatat</span>
+            <span className="text-2xl font-display font-black text-black">{totalDays} <span className="text-sm font-bold font-mono text-black/70">Hari</span></span>
+            <span className="text-[10px] font-bold font-mono text-black/60 block">Dari target periode</span>
           </div>
         </div>
 
         {/* Stat 3: Kehadiran */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-200 cursor-default">
-          <div className="p-3 bg-gray-50 rounded-xl text-gray-600">
+        <div className="bg-white border-4 border-black p-5 shadow-[4px_4px_0px_rgba(0,0,0,1)] flex items-start gap-4 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all duration-200 cursor-default">
+          <div className="p-3 bg-[#39FF14]/30 border-2 border-black text-black shadow-[1px_1px_0px_rgba(0,0,0,1)]">
             <UserCheck className="w-5 h-5" />
           </div>
           <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Kehadiran</span>
-            <span className="text-2xl font-semibold text-gray-900">{totalAttendance} <span className="text-sm font-normal text-gray-500">Hari</span></span>
-            <span className="text-[10px] text-gray-400 block">Sejak awal periode magang</span>
+            <span className="text-xs font-display font-black text-black/60 uppercase tracking-wider block">Kehadiran</span>
+            <span className="text-2xl font-display font-black text-black">{totalAttendance} <span className="text-sm font-bold font-mono text-black/70">Hari</span></span>
+            <span className="text-[10px] font-bold font-mono text-black/60 block">Sejak awal periode magang</span>
           </div>
         </div>
 
         {/* Stat 4: Completion Rate */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-200 cursor-default">
-          <div className="p-3 bg-gray-50 rounded-xl text-gray-600">
+        <div className="bg-white border-4 border-black p-5 shadow-[4px_4px_0px_rgba(0,0,0,1)] flex items-start gap-4 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all duration-200 cursor-default">
+          <div className="p-3 bg-[#FF6B6B]/30 border-2 border-black text-black shadow-[1px_1px_0px_rgba(0,0,0,1)]">
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div className="space-y-1.5 flex-1">
-            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider block">Penyelesaian</span>
-            <span className="text-2xl font-semibold text-gray-900 block">{completionRate}%</span>
-            {/* Thin progressive progress bar */}
-            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1">
+            <span className="text-xs font-display font-black text-black/60 uppercase tracking-wider block">Penyelesaian</span>
+            <span className="text-2xl font-display font-black text-black block">{completionRate}%</span>
+            {/* Thick neobrutalist progress bar */}
+            <div className="w-full h-3.5 bg-[#FFFDF6] border-2 border-black overflow-hidden mt-1 shadow-[1px_1px_0px_rgba(0,0,0,1)]">
               <div 
-                className="h-full bg-gray-900 rounded-full transition-all duration-500" 
+                className="h-full bg-[#FF5C8A] transition-all duration-500" 
                 style={{ width: `${completionRate}%` }}
               ></div>
             </div>
-            <span className="text-[10px] text-gray-400 block pt-0.5">{completedLogs} dari {totalDays} tugas selesai</span>
+            <span className="text-[10px] font-bold font-mono text-black/60 block pt-0.5">{completedLogs} dari {totalDays} tugas selesai</span>
           </div>
         </div>
       </div>
@@ -158,125 +158,123 @@ export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateT
         {/* Column Left: Today Action Card & Activity Categories */}
         <div className="lg:col-span-2 space-y-6">
           {/* Today Status Card */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs">
-            <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-gray-900"></span>
-              Status Hari Ini ({new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })})
+          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_rgba(0,0,0,1)]">
+            <h2 className="text-lg font-display font-black text-black mb-4 flex items-center gap-2 uppercase tracking-wide">
+              <span className="w-3.5 h-3.5 border-2 border-black bg-black"></span>
+              STATUS HARI INI ({new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()})
             </h2>
 
             {todayLog ? (
-              <div className="bg-gray-50 border border-gray-200/50 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-gray-300 transition-colors duration-200">
+              <div className="bg-[#C3F2FF] border-3 border-black p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
                 <div className="space-y-2 max-w-xl">
-                  <div className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-md border border-green-100">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  <div className="inline-flex items-center gap-1.5 bg-[#39FF14] text-black text-xs font-black px-2.5 py-1.5 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase tracking-wider">
+                    <span className="w-2.5 h-2.5 rounded-full bg-black border border-white"></span>
                     Logbook Hari Ini Sudah Terisi
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-base">{todayLog.title}</h3>
-                  <p className="text-sm text-gray-500 line-clamp-2">{todayLog.description}</p>
-                  <div className="flex gap-4 text-xs text-gray-400">
+                  <h3 className="font-display font-extrabold text-black text-lg uppercase tracking-tight">{todayLog.title}</h3>
+                  <p className="text-sm font-bold text-black/70 font-sans line-clamp-2">{todayLog.description}</p>
+                  <div className="flex gap-4 text-xs font-mono font-bold text-black">
                     <span>Durasi: <strong>{todayLog.minutes} Menit</strong></span>
                     <span>•</span>
-                    <span>Status: <strong>{todayLog.status}</strong></span>
+                    <span>Status: <strong className="bg-white border border-black px-1.5 py-0.5 uppercase">{todayLog.status}</strong></span>
                   </div>
                 </div>
                 <button
                   onClick={() => onNavigateToForm(todayStr)}
-                  className="text-xs font-medium text-gray-900 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 whitespace-nowrap cursor-pointer transition-all"
+                  className="text-xs font-extrabold text-black bg-white border-2 border-black px-4 py-2 hover:bg-black/5 shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 transition-all cursor-pointer"
                 >
                   Edit Catatan
                 </button>
               </div>
             ) : (
-              <div className="bg-gradient-to-br from-gray-50 to-white border border-dashed border-gray-300/80 rounded-2xl p-8 text-center space-y-4 hover:border-gray-400 transition-all duration-300">
-                <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto text-gray-400 border border-gray-100 shadow-xs">
-                  <Calendar className="w-7 h-7 text-gray-400" />
+              <div className="bg-[#FFFDF6] border-3 border-dashed border-black p-8 text-center space-y-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                <div className="w-14 h-14 border-3 border-black bg-[#FFDE4D] flex items-center justify-center mx-auto text-black shadow-[3px_3px_0px_rgba(0,0,0,1)]">
+                  <Calendar className="w-7 h-7 text-black" />
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
-                  <h3 className="font-semibold text-gray-800 text-sm">Belum Ada Catatan Hari Ini</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">
+                  <h3 className="font-display font-black text-black text-sm uppercase">Belum Ada Catatan Hari Ini</h3>
+                  <p className="text-xs font-bold text-black/60 leading-relaxed font-sans">
                     Yuk, catat aktivitas magangmu hari ini! Pengisian teratur membantu memantau progres harian dan mempermudah ekspor laporan di akhir periode.
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigateToForm(todayStr)}
-                  className="inline-flex items-center gap-2 text-xs font-bold text-white bg-gray-900 hover:bg-gray-800 hover:-translate-y-0.5 active:translate-y-0 px-5 py-2.5 rounded-xl transition-all cursor-pointer shadow-xs"
+                  className="inline-flex items-center gap-2 text-xs font-black text-black bg-[#FF6B6B] border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all px-5 py-3 uppercase cursor-pointer"
                 >
                   Mulai Isi Logbook Sekarang
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* Column Right: Weekly hours chart & Quick Guidance */}
+        {/* Column Right: Weekly hours chart */}
         <div className="space-y-6">
           {/* Weekly chart */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-300">
+          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_rgba(0,0,0,1)] transition-all flex flex-col justify-between">
             <div className="space-y-1 mb-6">
-              <h2 className="text-base font-semibold text-gray-900">Grafik Durasi Kerja Minggu Ini</h2>
-              <p className="text-[11px] text-gray-400">Distribusi durasi kerja harian dari Senin hingga Jumat</p>
+              <h2 className="text-base font-display font-black text-black uppercase tracking-wide">Grafik Durasi Minggu Ini</h2>
+              <p className="text-[11px] font-bold font-mono text-black/50">Distribusi durasi kerja harian dari Senin hingga Jumat</p>
             </div>
 
-            {/* Minimalist Visual Bars or Beautiful Empty Placeholder */}
+            {/* Visual Bars */}
             {weeklyData.every(d => d.minutes === 0) ? (
-              <div className="relative h-36 flex items-center justify-center border-b border-gray-100 pb-2">
+              <div className="relative h-36 flex items-center justify-center border-b-2 border-black pb-2">
                 {/* Ghost background bars for layout placeholder */}
                 <div className="absolute inset-0 flex items-end justify-between px-4 pb-2 opacity-10 pointer-events-none">
                   {[40, 60, 30, 80, 50].map((h, i) => (
                     <div key={i} className="flex flex-col items-center flex-1">
-                      <div className="w-7 bg-gray-400 rounded-t-md" style={{ height: `${h}%` }}></div>
-                      <div className="w-6 h-1 bg-gray-300 mt-2 rounded"></div>
+                      <div className="w-7 bg-black rounded-t-none border-2 border-black" style={{ height: `${h}%` }}></div>
+                      <div className="w-6 h-1 bg-black mt-2"></div>
                     </div>
                   ))}
                 </div>
                 
                 {/* Visual indicator card */}
-                <div className="z-10 text-center space-y-2 p-4 bg-white/95 backdrop-blur-xs rounded-xl shadow-xs border border-gray-100/50 max-w-[200px]">
-                  <TrendingUp className="w-5 h-5 text-gray-400 mx-auto" />
-                  <p className="text-[10px] font-medium text-gray-600 leading-normal">
+                <div className="z-10 text-center space-y-2 p-4 bg-[#FFFDF6] border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] max-w-[200px]">
+                  <TrendingUp className="w-5 h-5 text-black mx-auto" />
+                  <p className="text-[10px] font-black text-black uppercase leading-normal">
                     Belum ada data durasi kerja minggu ini.
                   </p>
                   <button
                     onClick={() => onNavigateToForm()}
-                    className="text-[10px] font-extrabold text-gray-900 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    className="text-[10px] font-black uppercase text-[#A259FF] hover:underline inline-flex items-center gap-1 cursor-pointer"
                   >
                     Mulai Catat →
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="flex items-end justify-between h-36 px-4 border-b border-gray-100 pb-2">
+              <div className="flex items-end justify-between h-36 px-4 border-b-2 border-black pb-2">
                 {weeklyData.map((data, idx) => {
                   const heightPercentage = Math.min((data.minutes / maxWeeklyMinutes) * 100, 100);
                   return (
                     <div key={idx} className="flex flex-col items-center flex-1 group relative">
                       {/* Tooltip on hover */}
-                      <div className="absolute bottom-full mb-2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-sm z-20">
+                      <div className="absolute bottom-full mb-2 bg-[#FFDE4D] border-2 border-black text-black text-[10px] font-bold px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-[2px_2px_0px_rgba(0,0,0,1)] z-20">
                         {data.minutes > 0 ? `${data.minutes} Menit: ${data.title}` : 'Belum terisi'}
                       </div>
 
-                      <div className="w-7 bg-gray-100 rounded-t-md overflow-hidden h-28 flex items-end">
+                      <div className="w-7 bg-[#FFFDF6] border-2 border-black h-28 flex items-end shadow-[1px_1px_0px_rgba(0,0,0,1)]">
                         <div 
-                          className={`w-full transition-all duration-500 rounded-t-md ${data.minutes > 0 ? 'bg-gray-900' : 'bg-gray-200'}`}
+                          className={`w-full transition-all duration-500 border-t-2 border-black ${data.minutes > 0 ? 'bg-[#A259FF]' : 'bg-[#FFFDF6]'}`}
                           style={{ height: `${heightPercentage}%` }}
                         ></div>
                       </div>
                       
-                      <span className="text-[10px] text-gray-400 font-medium mt-2">{data.day.substring(0, 3)}</span>
+                      <span className="text-[10px] font-bold font-mono mt-2 text-black">{data.day.substring(0, 3).toUpperCase()}</span>
                     </div>
                   );
                 })}
               </div>
             )}
 
-            <div className="flex justify-between items-center mt-4 text-[11px] text-gray-400 px-2">
-              <span>Total Minggu Ini: <strong>{weeklyData.reduce((sum, d) => sum + d.minutes, 0)} Menit</strong></span>
-              <span>Target ideal: 2400 Menit</span>
+            <div className="flex justify-between items-center mt-4 text-[11px] font-bold font-mono text-black px-2">
+              <span>Total: <strong>{weeklyData.reduce((sum, d) => sum + d.minutes, 0)} Min</strong></span>
+              <span className="bg-[#FFDE4D] border border-black px-1.5 py-0.5">Target: 2400 Min</span>
             </div>
           </div>
-
-
         </div>
       </div>
     </div>
