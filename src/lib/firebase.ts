@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   projectId: "sigma-anchor-fh7sp",
@@ -11,4 +11,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, "ai-studio-yatimagang-1199b36c-02a9-45a4-b81b-7f6632391384");
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, "ai-studio-yatimagang-1199b36c-02a9-45a4-b81b-7f6632391384");
+

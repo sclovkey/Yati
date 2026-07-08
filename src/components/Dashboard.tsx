@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { LogEntry, InternshipInfo, AttendanceRecord } from '../types';
+import { LogEntry, InternshipInfo, AttendanceRecord, OfficeLocation } from '../types';
 import { Calendar, Clock, Award, CheckCircle2, TrendingUp, AlertCircle, Sparkles, LogOut, ChevronRight, UserCheck } from 'lucide-react';
 
 interface DashboardProps {
@@ -13,9 +13,11 @@ interface DashboardProps {
   attendanceLogs?: AttendanceRecord[];
   onNavigateToForm: (initialDate?: string) => void;
   onNavigateToList: () => void;
+  onNavigateToPresensi: () => void;
+  officeLoc: OfficeLocation;
 }
 
-export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateToForm, onNavigateToList }: DashboardProps) {
+export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateToForm, onNavigateToList, onNavigateToPresensi, officeLoc }: DashboardProps) {
   // 1. Calculations
   const totalDays = logs.length;
   const totalMinutes = logs.reduce((sum, log) => sum + log.minutes, 0);
@@ -59,8 +61,34 @@ export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateT
   const weeklyData = getWeeklyDistribution();
   const maxWeeklyMinutes = Math.max(...weeklyData.map(d => d.minutes), 480); // scale bar height (default 480 mins)
 
+  const isOfficeConfigured = officeLoc && (officeLoc.latitude !== 0 || officeLoc.longitude !== 0);
+
   return (
     <div id="dashboard-container" className="space-y-8 text-black font-sans">
+      {/* Guideline banner for new registrants */}
+      {!isOfficeConfigured && (
+        <div id="new-user-office-setup-banner" className="bg-[#FFDE4D] border-4 border-black p-5 shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-[#39FF14] border-2 border-black flex items-center justify-center text-black shrink-0 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+              <AlertCircle className="w-5 h-5 text-black" />
+            </div>
+            <div className="space-y-1">
+              <span className="text-[9px] font-mono font-extrabold text-[#A259FF] bg-purple-100 border border-black px-1.5 py-0.5 rounded-sm uppercase">PANDUAN PENDAFTAR BARU</span>
+              <h4 className="text-sm font-display font-black text-black uppercase">Atur Koordinat Posisi Kantor Terlebih Dahulu</h4>
+              <p className="text-xs font-bold text-black/80 font-sans leading-relaxed">
+                Sebagai pendaftar baru, silakan atur titik koordinat lokasi kantor magang Anda terlebih dahulu agar sistem Geofencing presensi dapat melacak jarak swafoto Anda secara presisi.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onNavigateToPresensi}
+            className="w-full md:w-auto inline-flex items-center justify-center bg-[#39FF14] hover:bg-[#2adb10] text-black text-xs font-black uppercase tracking-wider px-5 py-3 border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer whitespace-nowrap"
+          >
+            Atur Posisi Kantor Sekarang →
+          </button>
+        </div>
+      )}
+
       {/* Header Profile Summary */}
       <div className="bg-[#FFDE4D] border-4 border-black p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[6px_6px_0px_rgba(0,0,0,1)]">
         <div className="space-y-2">

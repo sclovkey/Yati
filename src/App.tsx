@@ -48,10 +48,12 @@ const INITIAL_NOTIF_SETTINGS: SettingsType = {
 };
 
 const DEFAULT_OFFICE: OfficeLocation = {
-  latitude: -3.322238,
-  longitude: 114.591253,
+  latitude: 0,
+  longitude: 0,
   radius: 600, // 600 meters
-  name: 'Bank Kalsel Kantor Pusat'
+  name: '',
+  workStart: '08:00',
+  workEnd: '17:00'
 };
 
 export default function App() {
@@ -507,6 +509,8 @@ export default function App() {
               attendanceLogs={attendance}
               onNavigateToForm={handleQuickAdd}
               onNavigateToList={() => setActiveTab('logbook')}
+              onNavigateToPresensi={() => setActiveTab('presensi')}
+              officeLoc={officeLoc}
             />
           )}
 

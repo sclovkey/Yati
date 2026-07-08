@@ -36,6 +36,8 @@ export interface OfficeLocation {
   longitude: number;
   radius: number; // in meters
   name: string;
+  workStart?: string; // Format: HH:MM, e.g., '08:00'
+  workEnd?: string; // Format: HH:MM, e.g., '17:00'
 }
 
 export interface NotificationSettings {

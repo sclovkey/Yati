@@ -47,6 +47,16 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return Math.round(R * c); // Distance in meters
 }
 
+// Helper to check if check-in or check-out is past limit
+function isTimeLater(timeStr: string, limitStr: string): boolean {
+  if (!timeStr || !limitStr) return false;
+  // Support HH:MM:SS and HH:MM
+  const [h1, m1] = timeStr.split(':').map(Number);
+  const [h2, m2] = limitStr.split(':').map(Number);
+  if (isNaN(h1) || isNaN(m1) || isNaN(h2) || isNaN(m2)) return false;
+  return (h1 * 60 + m1) > (h2 * 60 + m2);
+}
+
 export default function AttendanceSystem({
   attendanceLogs,
   onSaveAttendance,
@@ -66,14 +76,18 @@ export default function AttendanceSystem({
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   
+  const isOfficeConfigured = officeLoc && (officeLoc.latitude !== 0 || officeLoc.longitude !== 0);
+
   // Settings toggle
-  const [showSettings, setShowSettings] = useState(false);
+  const [showSettings, setShowSettings] = useState(!isOfficeConfigured);
   
   // Custom inputs for settings
-  const [tempLat, setTempLat] = useState(officeLoc.latitude.toString());
-  const [tempLng, setTempLng] = useState(officeLoc.longitude.toString());
-  const [tempRadius, setTempRadius] = useState(officeLoc.radius.toString());
-  const [tempName, setTempName] = useState(officeLoc.name);
+  const [tempLat, setTempLat] = useState(isOfficeConfigured ? officeLoc.latitude.toString() : '');
+  const [tempLng, setTempLng] = useState(isOfficeConfigured ? officeLoc.longitude.toString() : '');
+  const [tempRadius, setTempRadius] = useState(officeLoc.radius ? officeLoc.radius.toString() : '600');
+  const [tempName, setTempName] = useState(officeLoc.name || '');
+  const [tempWorkStart, setTempWorkStart] = useState(officeLoc.workStart || '08:00');
+  const [tempWorkEnd, setTempWorkEnd] = useState(officeLoc.workEnd || '17:00');
 
   // State for Sakit/Izin
   const [presenceTab, setPresenceTab] = useState<'hadir' | 'nonHadir'>('hadir');
@@ -127,8 +141,12 @@ export default function AttendanceSystem({
         setCurrentCoords({ latitude, longitude });
         
         // Calculate distance
-        const dist = calculateDistance(latitude, longitude, officeLoc.latitude, officeLoc.longitude);
-        setDistance(dist);
+        if (officeLoc && (officeLoc.latitude !== 0 || officeLoc.longitude !== 0)) {
+          const dist = calculateDistance(latitude, longitude, officeLoc.latitude, officeLoc.longitude);
+          setDistance(dist);
+        } else {
+          setDistance(null);
+        }
         setIsFetchingLocation(false);
       },
       (error) => {
@@ -168,7 +186,9 @@ export default function AttendanceSystem({
       latitude: lat,
       longitude: lng,
       radius: rad,
-      name: tempName || 'Titik Kantor Pusat'
+      name: tempName || 'Titik Kantor Pusat',
+      workStart: tempWorkStart || '08:00',
+      workEnd: tempWorkEnd || '17:00'
     });
     
     setShowSettings(false);
@@ -630,10 +650,13 @@ export default function AttendanceSystem({
           onClick={() => {
             setShowSettings(!showSettings);
             // Reset temp inputs
-            setTempLat(officeLoc.latitude.toString());
-            setTempLng(officeLoc.longitude.toString());
-            setTempRadius(officeLoc.radius.toString());
-            setTempName(officeLoc.name);
+            const hasCoords = officeLoc && (officeLoc.latitude !== 0 || officeLoc.longitude !== 0);
+            setTempLat(hasCoords ? officeLoc.latitude.toString() : '');
+            setTempLng(hasCoords ? officeLoc.longitude.toString() : '');
+            setTempRadius(officeLoc.radius ? officeLoc.radius.toString() : '600');
+            setTempName(officeLoc.name || '');
+            setTempWorkStart(officeLoc.workStart || '08:00');
+            setTempWorkEnd(officeLoc.workEnd || '17:00');
           }}
           className="flex items-center gap-1.5 px-3.5 py-2 border-2 border-black bg-[#C3F2FF] hover:bg-[#a9e4f5] text-xs font-black uppercase tracking-wider text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer"
         >
@@ -645,6 +668,19 @@ export default function AttendanceSystem({
       {/* Settings Form Card */}
       {showSettings && (
         <div className="bg-[#FFFDF6] border-4 border-black p-5 md:p-6 shadow-[6px_6px_0px_rgba(0,0,0,1)] space-y-4">
+          {/* Guide banner for new registrants */}
+          {attendanceLogs.length === 0 && (
+            <div className="bg-[#FFDE4D] border-3 border-black p-4 shadow-[2px_2px_0px_rgba(0,0,0,1)] flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-black animate-pulse" />
+              <div className="space-y-1">
+                <h4 className="text-xs font-display font-black text-black uppercase">⚠️ PANDUAN PENDAFTAR BARU: ATUR KOORDINAT KANTOR</h4>
+                <p className="text-[11px] font-bold text-black/80 font-sans leading-relaxed">
+                  Halo! Sebagai pendaftar baru, Anda <strong>wajib mengatur posisi koordinat kantor</strong> Anda terlebih dahulu sebelum memulai presensi. 
+                  Silakan sesuaikan koordinat di bawah ini, atau cukup klik tombol <strong>"Gunakan Lokasi Saya Saat Ini"</strong> agar lokasi GPS Anda terkunci secara otomatis.
+                </p>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <MapPinned className="w-5 h-5 text-black" />
             <h3 className="font-display font-black text-black uppercase text-sm">Konfigurasi Titik Tempat Kerja (Geofencing)</h3>
@@ -652,7 +688,7 @@ export default function AttendanceSystem({
           <p className="text-xs font-bold text-black/70 leading-relaxed">
             Presensi diatur menggunakan batasan koordinat GPS. Isikan koordinat lokasi kantor Anda di bawah ini atau klik tombol otomatis untuk mengunci titik kantor berdasarkan posisi Anda sekarang.
           </p>
-          <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+          <form onSubmit={handleSaveSettings} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 pt-2">
             <div className="space-y-1">
               <label className="text-[10px] font-black text-black uppercase tracking-wider block">Nama Tempat Kerja</label>
               <input
@@ -684,7 +720,7 @@ export default function AttendanceSystem({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Radius Toleransi (Meter)</label>
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Radius (Meter)</label>
               <input
                 type="number"
                 value={tempRadius}
@@ -695,7 +731,27 @@ export default function AttendanceSystem({
                 required
               />
             </div>
-            <div className="md:col-span-4 flex flex-wrap justify-between items-center gap-3 pt-2">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Jam Masuk (Batas)</label>
+              <input
+                type="time"
+                value={tempWorkStart}
+                onChange={(e) => setTempWorkStart(e.target.value)}
+                className="w-full px-3 py-2 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-black uppercase tracking-wider block">Jam Pulang (Mulai)</label>
+              <input
+                type="time"
+                value={tempWorkEnd}
+                onChange={(e) => setTempWorkEnd(e.target.value)}
+                className="w-full px-3 py-2 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
+                required
+              />
+            </div>
+            <div className="lg:col-span-6 sm:col-span-2 flex flex-wrap justify-between items-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={handleSetCurrentAsOffice}
@@ -1138,15 +1194,25 @@ export default function AttendanceSystem({
               <div className="bg-white border-2 border-black p-3.5 text-xs space-y-2 shadow-[2px_2px_0px_rgba(0,0,0,1)] font-bold text-black leading-relaxed">
                 <div className="flex justify-between">
                   <span className="text-black/60">Tempat Kerja:</span>
-                  <span className="font-extrabold">{officeLoc.name}</span>
+                  <span className="font-extrabold text-right">{isOfficeConfigured ? officeLoc.name : 'Belum Diatur'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-black/60">Koordinat Kantor:</span>
-                  <span className="font-mono text-black">{officeLoc.latitude.toFixed(6)}, {officeLoc.longitude.toFixed(6)}</span>
+                  <span className="font-mono text-black">
+                    {isOfficeConfigured ? `${officeLoc.latitude.toFixed(6)}, ${officeLoc.longitude.toFixed(6)}` : 'Belum Diatur'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-black/60">Radius Diizinkan:</span>
                   <span className="font-extrabold">{officeLoc.radius} Meter</span>
+                </div>
+                <div className="flex justify-between border-t border-black/10 pt-2">
+                  <span className="text-black/60">Jam Masuk (Batas):</span>
+                  <span className="font-extrabold text-[#FF6B6B] bg-[#FF6B6B]/10 px-1.5 rounded-sm border border-[#FF6B6B]/30">{officeLoc.workStart || '08:00'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-black/60">Jam Pulang (Mulai):</span>
+                  <span className="font-extrabold text-[#3B82F6] bg-[#3B82F6]/10 px-1.5 rounded-sm border border-[#3B82F6]/30">{officeLoc.workEnd || '17:00'}</span>
                 </div>
               </div>
 
@@ -1173,14 +1239,22 @@ export default function AttendanceSystem({
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-black/60">Jarak ke Kantor:</span>
-                      <span className={`font-black text-xs px-2 py-0.5 border border-black ${isWithinRadius ? 'bg-[#39FF14]' : 'bg-[#FF6B6B]'}`}>
-                        {distance !== null ? `${distance} Meter` : 'Menghitung...'}
+                      <span className={`font-black text-xs px-2 py-0.5 border border-black ${isOfficeConfigured ? (isWithinRadius ? 'bg-[#39FF14]' : 'bg-[#FF6B6B]') : 'bg-gray-200'}`}>
+                        {isOfficeConfigured ? (distance !== null ? `${distance} Meter` : 'Menghitung...') : 'Belum Diatur'}
                       </span>
                     </div>
                   </div>
 
                   {/* Radius verification badge */}
-                  {isWithinRadius ? (
+                  {!isOfficeConfigured ? (
+                    <div className="bg-[#FFDE4D]/30 border-2 border-black text-black p-3.5 flex items-start gap-2 text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                      <AlertCircle className="w-5 h-5 text-black shrink-0 mt-0.5" />
+                      <div>
+                        <h5 className="font-black uppercase text-xs">Titik Kantor Belum Diatur</h5>
+                        <p className="text-[11px] font-bold text-black/85 mt-0.5">Silakan isi nama tempat kerja dan koordinat di atas, lalu klik <strong>"Simpan Titik Kantor"</strong> untuk memulai presensi.</p>
+                      </div>
+                    </div>
+                  ) : isWithinRadius ? (
                     <div className="bg-[#39FF14]/30 border-2 border-black text-black p-3.5 flex items-start gap-2 text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)]">
                       <CheckCircle className="w-5 h-5 text-black shrink-0 mt-0.5" />
                       <div>
@@ -1315,7 +1389,23 @@ export default function AttendanceSystem({
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 font-mono border-r-2 border-black/10">{isSakitOrIzin ? '-' : (log.clockInTime || '-')}</td>
+                      <td className="px-4 py-3.5 font-mono border-r-2 border-black/10">
+                        {isSakitOrIzin ? (
+                          '-'
+                        ) : log.clockInTime ? (
+                          isTimeLater(log.clockInTime, officeLoc.workStart || '08:00') ? (
+                            <span className="inline-block text-[#FF6B6B] bg-[#FF6B6B]/10 border-2 border-[#FF6B6B] px-1.5 py-0.5 text-[11px] font-black uppercase tracking-wider shadow-[1px_1px_0px_rgba(255,107,107,0.3)]">
+                              {log.clockInTime} (Terlambat)
+                            </span>
+                          ) : (
+                            <span className="inline-block text-emerald-600 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 text-[11px] font-bold">
+                              {log.clockInTime} (Tepat Waktu)
+                            </span>
+                          )
+                        ) : (
+                          '-'
+                        )}
+                      </td>
                       <td className="px-4 py-3.5 font-mono text-black border-r-2 border-black/10">{isSakitOrIzin ? '-' : (log.clockInDistance !== undefined ? `${log.clockInDistance} m` : '-')}</td>
                       <td className="px-4 py-3.5 text-center border-r-2 border-black/10">
                         <div className="w-12 h-12 border-2 border-black overflow-hidden mx-auto bg-gray-50 flex items-center justify-center shadow-[1px_1px_0px_rgba(0,0,0,1)]">
@@ -1326,7 +1416,23 @@ export default function AttendanceSystem({
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 font-mono border-r-2 border-black/10">{isSakitOrIzin ? '-' : (log.clockOutTime || '--:--:--')}</td>
+                      <td className="px-4 py-3.5 font-mono border-r-2 border-black/10">
+                        {isSakitOrIzin ? (
+                          '-'
+                        ) : log.clockOutTime ? (
+                          isTimeLater(log.clockOutTime, officeLoc.workEnd || '17:00') ? (
+                            <span className="inline-block text-[#3B82F6] bg-[#3B82F6]/10 border-2 border-[#3B82F6] px-1.5 py-0.5 text-[11px] font-black uppercase tracking-wider shadow-[1px_1px_0px_rgba(59,130,246,0.3)]">
+                              {log.clockOutTime} (Selesai Kerja)
+                            </span>
+                          ) : (
+                            <span className="inline-block text-black/60 bg-black/5 border border-black/20 px-1.5 py-0.5 text-[11px]">
+                              {log.clockOutTime}
+                            </span>
+                          )
+                        ) : (
+                          '--:--:--'
+                        )}
+                      </td>
                       <td className="px-4 py-3.5 font-mono text-black border-r-2 border-black/10">
                         {isSakitOrIzin ? '-' : (log.clockOutDistance !== undefined ? `${log.clockOutDistance} m` : '-')}
                       </td>
