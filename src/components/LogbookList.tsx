@@ -17,6 +17,38 @@ interface LogbookListProps {
 const STATUSES = ['Semua Status', 'Selesai', 'Dalam Proses', 'Tertunda'];
 
 export default function LogbookList({ logs, info, onEditLog }: LogbookListProps) {
+  // Helpers to format minutes to nice readable text
+  const formatDurationDesktop = (log: LogEntry) => {
+    const hours = Math.floor(log.minutes / 60);
+    const mins = log.minutes % 60;
+    const durationStr = hours > 0 
+      ? (mins > 0 ? `${hours} Jam ${mins} Menit` : `${hours} Jam`)
+      : `${mins} Menit`;
+      
+    if (log.startTime && log.endTime) {
+      return (
+        <div className="flex flex-col items-center">
+          <span className="font-semibold text-gray-800 text-xs">{durationStr}</span>
+          <span className="text-[10px] text-gray-400 font-medium font-mono mt-0.5">{log.startTime} - {log.endTime}</span>
+        </div>
+      );
+    }
+    return <span className="font-semibold text-gray-800 text-xs">{durationStr}</span>;
+  };
+
+  const formatDurationMobile = (log: LogEntry) => {
+    const hours = Math.floor(log.minutes / 60);
+    const mins = log.minutes % 60;
+    const durationStr = hours > 0 
+      ? (mins > 0 ? `${hours} Jam ${mins} Menit` : `${hours} Jam`)
+      : `${mins} Menit`;
+      
+    if (log.startTime && log.endTime) {
+      return `${durationStr} (${log.startTime} - ${log.endTime})`;
+    }
+    return `${durationStr} Kerja`;
+  };
+
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('Semua Status');
@@ -294,7 +326,9 @@ export default function LogbookList({ logs, info, onEditLog }: LogbookListProps)
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-center font-mono font-medium text-gray-700">{log.minutes} Menit</td>
+                      <td className="px-6 py-4 text-center font-mono font-medium text-gray-700">
+                        {formatDurationDesktop(log)}
+                      </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${statusBadgeClass}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
@@ -352,7 +386,9 @@ export default function LogbookList({ logs, info, onEditLog }: LogbookListProps)
 
                   <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs">
                     <div className="flex items-center gap-3">
-                      <span className="font-medium font-mono text-gray-700">{log.minutes} Menit Kerja</span>
+                      <span className="font-medium font-mono text-gray-700 text-xs">
+                        {formatDurationMobile(log)}
+                      </span>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border ${statusBadgeClass}`}>
                         {log.status}
                       </span>

@@ -16,9 +16,9 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
   // Registration specific fields
   const [studentName, setStudentName] = useState('');
   const [institution, setInstitution] = useState('');
-  const [position, setPosition] = useState('Staf IT Developer Intern');
-  const [companyName, setCompanyName] = useState('Bank Kalsel Kantor Pusat');
-  const [mentorName, setMentorName] = useState('Akhmad Fauzi, S.Kom');
+  const [position, setPosition] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [mentorName, setMentorName] = useState('');
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

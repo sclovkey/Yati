@@ -135,7 +135,7 @@ export default function NotificationSettings({ settings, onUpdateSettings }: Not
                   type="time"
                   value={reminderTime}
                   onChange={handleTimeChange}
-                  className="px-3.5 py-2 border border-gray-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="px-3.5 py-2 border border-gray-200 bg-white rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-gray-900"
                 />
                 <span className="text-[10px] text-gray-400 block">Direkomendasikan di akhir jam kerja (misal: 17:00).</span>
               </div>

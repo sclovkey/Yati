@@ -13,7 +13,7 @@ import BackupSettings from './components/BackupSettings';
 import AttendanceSystem from './components/AttendanceSystem';
 import AuthScreen from './components/AuthScreen';
 import { checkAndTriggerReminder } from './utils/notification';
-import { getFirestoreUserData, saveFirestoreUserData } from './lib/dbService';
+import { getFirestoreUserData, saveFirestoreUserData, getFirestoreUser } from './lib/dbService';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -106,19 +106,47 @@ export default function App() {
       try {
         // Fetch all app data for this user from Firestore
         const firestoreData = await getFirestoreUserData(currentUser);
+        const firestoreUserProfile = await getFirestoreUser(currentUser);
         
         if (!active) return;
 
+        let profileInfo = INITIAL_INFO;
+        if (firestoreUserProfile) {
+          profileInfo = {
+            studentName: firestoreUserProfile.studentName || currentUser,
+            institution: firestoreUserProfile.institution || 'Universitas Lambung Mangkurat',
+            companyName: firestoreUserProfile.companyName || 'Bank Kalsel Kantor Pusat',
+            startDate: new Date(Date.now() - 24 * 60 * 60 * 1000 * 30).toISOString().split('T')[0],
+            endDate: new Date(Date.now() + 24 * 60 * 60 * 1000 * 60).toISOString().split('T')[0],
+            position: firestoreUserProfile.position || 'Staf IT Developer Intern',
+            mentorName: firestoreUserProfile.mentorName || 'Akhmad Fauzi, S.Kom'
+          };
+        }
+
         if (firestoreData) {
           if (firestoreData.logs) setLogs(firestoreData.logs);
-          if (firestoreData.info) setInfo(firestoreData.info);
+          
+          let resolvedInfo = firestoreData.info || profileInfo;
+          // If stored info has the default 'Yati Amalia' but registered profile has a different name, override it to use the registered profile!
+          if (firestoreUserProfile && (resolvedInfo.studentName === 'Yati Amalia' || !resolvedInfo.studentName) && firestoreUserProfile.studentName && firestoreUserProfile.studentName !== 'Yati Amalia') {
+            resolvedInfo = {
+              ...resolvedInfo,
+              studentName: firestoreUserProfile.studentName,
+              institution: firestoreUserProfile.institution || resolvedInfo.institution,
+              companyName: firestoreUserProfile.companyName || resolvedInfo.companyName,
+              position: firestoreUserProfile.position || resolvedInfo.position,
+              mentorName: firestoreUserProfile.mentorName || resolvedInfo.mentorName
+            };
+          }
+          setInfo(resolvedInfo);
+
           if (firestoreData.notifSettings) setNotifSettings(firestoreData.notifSettings);
           if (firestoreData.attendance) setAttendance(firestoreData.attendance);
           if (firestoreData.officeLoc) setOfficeLoc(firestoreData.officeLoc);
           
           // Seed local cache too
           localStorage.setItem(`yati_magang_logs_${currentUser}`, JSON.stringify(firestoreData.logs || []));
-          localStorage.setItem(`yati_magang_info_${currentUser}`, JSON.stringify(firestoreData.info || INITIAL_INFO));
+          localStorage.setItem(`yati_magang_info_${currentUser}`, JSON.stringify(resolvedInfo));
           localStorage.setItem(`yati_magang_notif_settings_${currentUser}`, JSON.stringify(firestoreData.notifSettings || INITIAL_NOTIF_SETTINGS));
           localStorage.setItem(`yati_magang_attendance_${currentUser}`, JSON.stringify(firestoreData.attendance || []));
           localStorage.setItem(`yati_magang_office_loc_${currentUser}`, JSON.stringify(firestoreData.officeLoc || DEFAULT_OFFICE));
@@ -128,9 +156,20 @@ export default function App() {
           const currentLogs = savedLogsStr ? JSON.parse(savedLogsStr) : INITIAL_LOGS;
 
           const savedInfoStr = localStorage.getItem(`yati_magang_info_${currentUser}`);
-          let currentInfo = INITIAL_INFO;
+          let currentInfo = profileInfo;
           if (savedInfoStr) {
             currentInfo = JSON.parse(savedInfoStr);
+            // If savedInfo has default 'Yati Amalia' but registered profile is different, override it!
+            if (firestoreUserProfile && (currentInfo.studentName === 'Yati Amalia' || !currentInfo.studentName) && firestoreUserProfile.studentName && firestoreUserProfile.studentName !== 'Yati Amalia') {
+              currentInfo = {
+                ...currentInfo,
+                studentName: firestoreUserProfile.studentName,
+                institution: firestoreUserProfile.institution || currentInfo.institution,
+                companyName: firestoreUserProfile.companyName || currentInfo.companyName,
+                position: firestoreUserProfile.position || currentInfo.position,
+                mentorName: firestoreUserProfile.mentorName || currentInfo.mentorName
+              };
+            }
           } else {
             const users = JSON.parse(localStorage.getItem('yati_magang_users') || '[]');
             const matchedUser = users.find((u: any) => u.username === currentUser);
@@ -138,7 +177,7 @@ export default function App() {
               currentInfo = {
                 studentName: matchedUser.studentName || currentUser,
                 institution: matchedUser.institution || 'Universitas Lambung Mangkurat',
-                companyName: 'Bank Kalsel Kantor Pusat',
+                companyName: matchedUser.companyName || 'Bank Kalsel Kantor Pusat',
                 startDate: new Date(Date.now() - 24 * 60 * 60 * 1000 * 30).toISOString().split('T')[0],
                 endDate: new Date(Date.now() + 24 * 60 * 60 * 1000 * 60).toISOString().split('T')[0],
                 position: matchedUser.position || 'Staf IT Developer Intern',

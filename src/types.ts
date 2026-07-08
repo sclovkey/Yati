@@ -12,6 +12,8 @@ export interface LogEntry {
   status: 'Selesai' | 'Dalam Proses' | 'Tertunda';
   mentorName?: string;
   notes?: string;
+  startTime?: string; // Format: HH:MM
+  endTime?: string; // Format: HH:MM
 }
 
 export interface AttendanceRecord {

@@ -351,7 +351,8 @@ export default function AttendanceSystem({
       return;
     }
 
-    const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
     const dist = distance !== null ? distance : calculateDistance(currentCoords.latitude, currentCoords.longitude, officeLoc.latitude, officeLoc.longitude);
 
     const newRecord: AttendanceRecord = {
@@ -380,7 +381,8 @@ export default function AttendanceSystem({
       return;
     }
 
-    const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
     const dist = distance !== null ? distance : calculateDistance(currentCoords.latitude, currentCoords.longitude, officeLoc.latitude, officeLoc.longitude);
 
     const updatedRecord: AttendanceRecord = {
@@ -416,7 +418,14 @@ export default function AttendanceSystem({
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(156, 163, 175);
-      doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 25);
+      const nowPrint = new Date();
+      const datePrintStr = nowPrint.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+      const timePrintStr = `${String(nowPrint.getHours()).padStart(2, '0')}:${String(nowPrint.getMinutes()).padStart(2, '0')}:${String(nowPrint.getSeconds()).padStart(2, '0')}`;
+      doc.text(`Dicetak pada: ${datePrintStr} ${timePrintStr}`, 14, 25);
 
       // Section title
       doc.setTextColor(55, 65, 81);

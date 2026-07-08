@@ -27,6 +27,8 @@ export default function LogbookForm({
   // Local states
   const [date, setDate] = useState('');
   const [title, setTitle] = useState('');
+  const [startTime, setStartTime] = useState('08:00');
+  const [endTime, setEndTime] = useState('16:00');
   const [minutes, setMinutes] = useState(480);
   const [status, setStatus] = useState<'Selesai' | 'Dalam Proses' | 'Tertunda'>('Selesai');
   const [description, setDescription] = useState('');
@@ -34,6 +36,7 @@ export default function LogbookForm({
   const [notes, setNotes] = useState('');
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
 
   // Reset or populate form based on editingLog
   useEffect(() => {
@@ -45,11 +48,25 @@ export default function LogbookForm({
       setDescription(editingLog.description);
       setMentorName(editingLog.mentorName || '');
       setNotes(editingLog.notes || '');
+      
+      // Load or calculate start and end times
+      if (editingLog.startTime && editingLog.endTime) {
+        setStartTime(editingLog.startTime);
+        setEndTime(editingLog.endTime);
+      } else {
+        setStartTime('08:00');
+        const endMin = 8 * 60 + editingLog.minutes;
+        const endH = Math.floor(endMin / 60) % 24;
+        const endM = endMin % 60;
+        setEndTime(`${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`);
+      }
     } else {
       // Create mode
       const todayStr = new Date().toISOString().split('T')[0];
       setDate(initialDate || todayStr);
       setTitle('');
+      setStartTime('08:00');
+      setEndTime('16:00');
       setMinutes(480);
       setStatus('Selesai');
       setDescription('');
@@ -59,11 +76,33 @@ export default function LogbookForm({
     setErrors({});
   }, [editingLog, initialDate, defaultMentorName]);
 
+  // Dynamically calculate minutes from startTime and endTime
+  useEffect(() => {
+    if (!startTime || !endTime) return;
+    try {
+      const [startHours, startMins] = startTime.split(':').map(Number);
+      const [endHours, endMins] = endTime.split(':').map(Number);
+      
+      if (isNaN(startHours) || isNaN(startMins) || isNaN(endHours) || isNaN(endMins)) return;
+      
+      let diffMins = (endHours * 60 + endMins) - (startHours * 60 + startMins);
+      if (diffMins < 0) {
+        // Assume crossing to the next day
+        diffMins += 24 * 60;
+      }
+      setMinutes(diffMins);
+    } catch (e) {
+      // safe fallback
+    }
+  }, [startTime, endTime]);
+
   const validateForm = () => {
     const tempErrors: { [key: string]: string } = {};
     if (!date) tempErrors.date = 'Tanggal wajib diisi';
     if (!title.trim()) tempErrors.title = 'Aktivitas utama wajib diisi';
     if (!description.trim()) tempErrors.description = 'Deskripsi detail wajib diisi';
+    if (!startTime) tempErrors.startTime = 'Jam mulai wajib diisi';
+    if (!endTime) tempErrors.endTime = 'Jam selesai wajib diisi';
     if (minutes <= 0 || minutes > 1440) tempErrors.minutes = 'Durasi harus di antara 1 - 1440 menit';
     
     setErrors(tempErrors);
@@ -82,7 +121,9 @@ export default function LogbookForm({
       status,
       description: description.trim(),
       mentorName: mentorName.trim() || undefined,
-      notes: notes.trim() || undefined
+      notes: notes.trim() || undefined,
+      startTime,
+      endTime
     });
   };
 
@@ -161,24 +202,55 @@ export default function LogbookForm({
           {errors.title && <p className="text-[11px] text-red-500 font-medium">{errors.title}</p>}
         </div>
 
-        {/* Column Group: Minutes & Status */}
+        {/* Column Group: Waktu & Status */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Field: Duration Minutes */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider block">Durasi Kerja (Menit) <span className="text-red-500">*</span></label>
-            <input
-              type="number"
-              id="log-minutes"
-              min="1"
-              max="1440"
-              placeholder="Contoh: 480"
-              value={minutes === 0 ? '' : minutes}
-              onChange={(e) => setMinutes(e.target.value === '' ? 0 : Number(e.target.value))}
-              className={`w-full px-3.5 py-2 border rounded-xl text-sm focus:outline-none focus:ring-1 ${
-                errors.minutes ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : 'border-gray-200 focus:ring-gray-900 focus:border-gray-900'
-              }`}
-            />
-            {errors.minutes && <p className="text-[11px] text-red-500 font-medium">{errors.minutes}</p>}
+          {/* Field: Waktu Kerja */}
+          <div className="space-y-1.5 col-span-1">
+            <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider block">Waktu Kerja <span className="text-red-500">*</span></label>
+            <div className="flex items-center gap-4">
+              {/* Mulai */}
+              <div className="flex-1">
+                <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Mulai</span>
+                <input
+                  type="time"
+                  id="log-start-time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-xl text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-gray-900 bg-white text-center ${
+                    errors.startTime ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-gray-900'
+                  }`}
+                  title="Jam Mulai"
+                />
+                {errors.startTime && <p className="text-[10px] text-red-500 mt-1 font-medium">{errors.startTime}</p>}
+              </div>
+
+              <span className="text-gray-400 text-xs font-medium self-end mb-2.5">s/d</span>
+
+              {/* Selesai */}
+              <div className="flex-1">
+                <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Selesai</span>
+                <input
+                  type="time"
+                  id="log-end-time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-xl text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-gray-900 bg-white text-center ${
+                    errors.endTime ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-gray-900'
+                  }`}
+                  title="Jam Selesai"
+                />
+                {errors.endTime && <p className="text-[10px] text-red-500 mt-1 font-medium">{errors.endTime}</p>}
+              </div>
+            </div>
+            
+            {/* Real-time calculated duration box */}
+            <div className="mt-2 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 flex items-center justify-between">
+              <span className="text-xs text-gray-500 font-medium">Durasi Terhitung:</span>
+              <span className="text-xs font-bold text-gray-900 bg-white shadow-2xs px-2.5 py-1 rounded-lg border border-gray-100">
+                {Math.floor(minutes / 60)} Jam {minutes % 60} Menit
+              </span>
+            </div>
+            {errors.minutes && <p className="text-[11px] text-red-500 font-medium mt-1">{errors.minutes}</p>}
           </div>
 
           {/* Field: Status */}
