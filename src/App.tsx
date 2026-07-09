@@ -451,7 +451,7 @@ export default function App() {
                 }`}
               >
                 <Settings className="w-3.5 h-3.5" />
-                Profil
+                Profil & Pengaturan
               </button>
             </nav>
 
@@ -519,6 +519,7 @@ export default function App() {
               logs={logs} 
               info={info} 
               onEditLog={handleEditTrigger}
+              onAddLog={handleQuickAdd}
             />
           )}
 
@@ -551,6 +552,8 @@ export default function App() {
               onImportLogs={handleImportData}
               onClearLogs={handleClearData}
               onLogout={handleLogout}
+              officeLoc={officeLoc}
+              onUpdateOfficeLoc={setOfficeLoc}
             />
           )}
         </div>
@@ -603,7 +606,7 @@ export default function App() {
           }`}
         >
           <Settings className="w-5 h-5" />
-          <span className="text-[9px] font-bold uppercase tracking-tight">Profil</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Pengaturan</span>
         </button>
       </div>
 

@@ -6,17 +6,18 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, InternshipInfo } from '../types';
 import { formatDateIndonesian, exportToExcel, exportToPDF } from '../utils/export';
-import { Search, Calendar, FileDown, Eye, FilterX, Edit2, ChevronDown, RefreshCw } from 'lucide-react';
+import { Search, Calendar, FileDown, Eye, FilterX, Edit2, ChevronDown, RefreshCw, Plus } from 'lucide-react';
 
 interface LogbookListProps {
   logs: LogEntry[];
   info: InternshipInfo;
   onEditLog: (log: LogEntry) => void;
+  onAddLog: () => void;
 }
 
 const STATUSES = ['Semua Status', 'Selesai', 'Dalam Proses', 'Tertunda'];
 
-export default function LogbookList({ logs, info, onEditLog }: LogbookListProps) {
+export default function LogbookList({ logs, info, onEditLog, onAddLog }: LogbookListProps) {
   // Helpers to format minutes to nice readable text
   const formatDurationDesktop = (log: LogEntry) => {
     const hours = Math.floor(log.minutes / 60);
@@ -132,17 +133,27 @@ export default function LogbookList({ logs, info, onEditLog }: LogbookListProps)
           </p>
         </div>
 
-        {/* Export Buttons */}
-        <div className="relative self-start md:self-center">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-3 self-start md:self-center">
           <button
-            id="export-dropdown-btn"
-            onClick={() => setShowExportMenu(!showExportMenu)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#FFDE4D] hover:bg-[#ffe259] text-black border-3 border-black text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all cursor-pointer"
+            onClick={onAddLog}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#FF6B6B] hover:bg-[#ff5555] text-black border-3 border-black text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all cursor-pointer"
           >
-            <FileDown className="w-4 h-4" />
-            Ekspor Laporan (.XLSX / .PDF)
-            <ChevronDown className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
+            Tambah Logbook
           </button>
+
+          {/* Export Buttons */}
+          <div className="relative">
+            <button
+              id="export-dropdown-btn"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#FFDE4D] hover:bg-[#ffe259] text-black border-3 border-black text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all cursor-pointer"
+            >
+              <FileDown className="w-4 h-4" />
+              Ekspor Laporan (.XLSX / .PDF)
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
 
           {showExportMenu && (
             <>
@@ -189,6 +200,7 @@ export default function LogbookList({ logs, info, onEditLog }: LogbookListProps)
           )}
         </div>
       </div>
+    </div>
 
       {/* Dynamic Filters Form */}
       <div className="bg-white border-4 border-black p-5 shadow-[4px_4px_0px_rgba(0,0,0,1)] space-y-4">
@@ -272,13 +284,22 @@ export default function LogbookList({ logs, info, onEditLog }: LogbookListProps)
               Tidak ada catatan logbook yang sesuai dengan kriteria filter Anda saat ini. Silakan coba atur ulang filter pencarian Anda.
             </p>
           </div>
-          <button
-            onClick={handleResetFilters}
-            className="inline-flex items-center gap-1 text-xs font-black bg-[#39FF14] hover:bg-[#2adb10] text-black px-4 py-2.5 border-3 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all cursor-pointer"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Setel Ulang Filter
-          </button>
+          <div className="flex justify-center flex-wrap gap-3">
+            <button
+              onClick={handleResetFilters}
+              className="inline-flex items-center gap-1 text-xs font-black bg-[#39FF14] hover:bg-[#2adb10] text-black px-4 py-2.5 border-3 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Setel Ulang Filter
+            </button>
+            <button
+              onClick={onAddLog}
+              className="inline-flex items-center gap-1.5 text-xs font-black bg-[#FF6B6B] hover:bg-[#ff5555] text-black px-4 py-2.5 border-3 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Tambah Logbook
+            </button>
+          </div>
         </div>
       ) : (
         <>

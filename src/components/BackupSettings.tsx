@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef } from 'react';
-import { InternshipInfo, LogEntry } from '../types';
-import { User, Building, Calendar, Clipboard, Download, Upload, Trash2, Save, FileSpreadsheet, RefreshCcw, LogOut } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { InternshipInfo, LogEntry, OfficeLocation } from '../types';
+import { User, Building, Calendar, Clipboard, Download, Upload, Trash2, Save, FileSpreadsheet, RefreshCcw, LogOut, Clock } from 'lucide-react';
 
 interface BackupSettingsProps {
   info: InternshipInfo;
@@ -14,6 +14,8 @@ interface BackupSettingsProps {
   onImportLogs: (importedLogs: LogEntry[], importedInfo?: InternshipInfo) => void;
   onClearLogs: () => void;
   onLogout?: () => void;
+  officeLoc: OfficeLocation;
+  onUpdateOfficeLoc: (loc: OfficeLocation) => void;
 }
 
 export default function BackupSettings({
@@ -22,12 +24,22 @@ export default function BackupSettings({
   onUpdateInfo,
   onImportLogs,
   onClearLogs,
-  onLogout
+  onLogout,
+  officeLoc,
+  onUpdateOfficeLoc
 }: BackupSettingsProps) {
   // Local profile state
   const [profile, setProfile] = useState<InternshipInfo>({ ...info });
+  const [workStart, setWorkStart] = useState(officeLoc.workStart || '08:00');
+  const [workEnd, setWorkEnd] = useState(officeLoc.workEnd || '17:00');
   const [isSaved, setIsSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep workStart and workEnd synchronized when officeLoc changes from elsewhere
+  useEffect(() => {
+    if (officeLoc.workStart) setWorkStart(officeLoc.workStart);
+    if (officeLoc.workEnd) setWorkEnd(officeLoc.workEnd);
+  }, [officeLoc]);
 
   const handleProfileChange = (key: keyof InternshipInfo, value: string) => {
     setProfile(prev => ({
@@ -40,6 +52,11 @@ export default function BackupSettings({
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     onUpdateInfo(profile);
+    onUpdateOfficeLoc({
+      ...officeLoc,
+      workStart: workStart,
+      workEnd: workEnd
+    });
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
@@ -229,6 +246,56 @@ export default function BackupSettings({
                 placeholder="Contoh: Budi Prasetyo, S.Kom"
                 className="w-full pl-10 pr-3.5 py-2.5 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
               />
+            </div>
+          </div>
+
+          {/* Jam Kerja (Presensi) */}
+          <div className="border-t-2 border-dashed border-black pt-5 space-y-4">
+            <div>
+              <h4 className="font-display font-black text-black uppercase text-xs tracking-wide flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-black" />
+                Pengaturan Jam Kerja (Presensi)
+              </h4>
+              <p className="text-[10px] font-bold text-black/60">Batasan jam masuk dan jam pulang kerja untuk menandai status terlambat / tepat waktu.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-black uppercase tracking-wider block">Jam Masuk (Batas Terlambat)</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-black">
+                    <Clock className="w-4 h-4 text-black" />
+                  </span>
+                  <input
+                    type="time"
+                    value={workStart}
+                    onChange={(e) => {
+                      setWorkStart(e.target.value);
+                      setIsSaved(false);
+                    }}
+                    className="w-full pl-10 pr-3.5 py-2.5 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-black uppercase tracking-wider block">Jam Pulang (Mulai Pulang)</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-black">
+                    <Clock className="w-4 h-4 text-black" />
+                  </span>
+                  <input
+                    type="time"
+                    value={workEnd}
+                    onChange={(e) => {
+                      setWorkEnd(e.target.value);
+                      setIsSaved(false);
+                    }}
+                    className="w-full pl-10 pr-3.5 py-2.5 border-2 border-black bg-white text-xs font-bold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
+                    required
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

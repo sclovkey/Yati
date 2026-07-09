@@ -107,13 +107,6 @@ export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateT
         
         <div className="flex flex-wrap gap-3">
           <button
-            id="quick-add-log-btn"
-            onClick={() => onNavigateToForm()}
-            className="inline-flex items-center justify-center bg-[#FF6B6B] hover:bg-[#ff5555] text-black text-xs font-black uppercase tracking-wider px-5 py-3 border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
-          >
-            + Tambah Logbook
-          </button>
-          <button
             id="view-all-logs-btn"
             onClick={onNavigateToList}
             className="inline-flex items-center justify-center bg-[#C3F2FF] hover:bg-[#b0ebff] text-black text-xs font-black uppercase tracking-wider px-5 py-3 border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
@@ -207,12 +200,6 @@ export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateT
                     <span>Status: <strong className="bg-white border border-black px-1.5 py-0.5 uppercase">{todayLog.status}</strong></span>
                   </div>
                 </div>
-                <button
-                  onClick={() => onNavigateToForm(todayStr)}
-                  className="text-xs font-extrabold text-black bg-white border-2 border-black px-4 py-2 hover:bg-black/5 shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 transition-all cursor-pointer"
-                >
-                  Edit Catatan
-                </button>
               </div>
             ) : (
               <div className="bg-[#FFFDF6] border-3 border-dashed border-black p-8 text-center space-y-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
@@ -222,14 +209,14 @@ export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateT
                 <div className="space-y-1 max-w-sm mx-auto">
                   <h3 className="font-display font-black text-black text-sm uppercase">Belum Ada Catatan Hari Ini</h3>
                   <p className="text-xs font-bold text-black/60 leading-relaxed font-sans">
-                    Yuk, catat aktivitas magangmu hari ini! Pengisian teratur membantu memantau progres harian dan mempermudah ekspor laporan di akhir periode.
+                    Yuk, pantau aktivitas magangmu di menu Logbook! Pengisian teratur membantu memantau progres harian dan mempermudah ekspor laporan di akhir periode.
                   </p>
                 </div>
                 <button
-                  onClick={() => onNavigateToForm(todayStr)}
-                  className="inline-flex items-center gap-2 text-xs font-black text-black bg-[#FF6B6B] border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all px-5 py-3 uppercase cursor-pointer"
+                  onClick={onNavigateToList}
+                  className="inline-flex items-center gap-2 text-xs font-black text-black bg-[#C3F2FF] border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all px-5 py-3 uppercase cursor-pointer"
                 >
-                  Mulai Isi Logbook Sekarang
+                  Lihat Riwayat Logbook
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -266,10 +253,10 @@ export default function Dashboard({ logs, info, attendanceLogs = [], onNavigateT
                     Belum ada data durasi kerja minggu ini.
                   </p>
                   <button
-                    onClick={() => onNavigateToForm()}
+                    onClick={onNavigateToList}
                     className="text-[10px] font-black uppercase text-[#A259FF] hover:underline inline-flex items-center gap-1 cursor-pointer"
                   >
-                    Mulai Catat →
+                    Lihat Logbook →
                   </button>
                 </div>
               </div>

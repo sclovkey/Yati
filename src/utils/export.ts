@@ -5,7 +5,6 @@
 
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { LogEntry, InternshipInfo } from '../types';
 
 // Helper to format date in Indonesian format
@@ -132,8 +131,26 @@ export function exportToPDF(logs: LogEntry[], info: InternshipInfo) {
   };
 
   // Helper: Draw footer on each page
-  const drawPageFooter = () => {
+  const drawPageFooter = (pageNum: number) => {
+    // If page >= 2, draw the compact Mentor Signature block above standard footer
+    if (pageNum >= 2) {
+      const sigY = pageHeight - 36;
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(51, 65, 85);
+      doc.text('Tanda Tangan Pembimbing atau Mentor:', pageWidth - 80, sigY);
+      
+      doc.setDrawColor(148, 163, 184);
+      doc.setLineWidth(0.3);
+      doc.line(pageWidth - 80, sigY + 12, pageWidth - 15, sigY + 12);
+      
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.text(info.mentorName || '__________________', pageWidth - 47.5, sigY + 16, { align: 'center' });
+    }
+
     doc.setDrawColor(226, 232, 240); // Slate 200
+    doc.setLineWidth(0.5);
     doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
     
     doc.setTextColor(148, 163, 184);
@@ -248,14 +265,14 @@ export function exportToPDF(logs: LogEntry[], info: InternshipInfo) {
 
   doc.line(20, sigY + 30, 80, sigY + 30);
   doc.setFont('Helvetica', 'bold');
-  doc.text(info.mentorName || '__________________', 20, sigY + 34);
+  doc.text(info.mentorName || '__________________', 50, sigY + 34, { align: 'center' });
 
   doc.line(pageWidth - 70, sigY + 30, pageWidth - 15, sigY + 30);
-  doc.text(info.studentName || '__________________', pageWidth - 70, sigY + 34);
+  doc.text(info.studentName || '__________________', pageWidth - 42.5, sigY + 34, { align: 'center' });
 
-  drawPageFooter();
+  drawPageFooter(1);
 
-  // PAGE 2: LOGBOOK TABLE
+  // PAGE 2: LOGBOOK BLOCKS (NO COLUMNS)
   doc.addPage();
   drawPageHeader(2);
 
@@ -264,56 +281,203 @@ export function exportToPDF(logs: LogEntry[], info: InternshipInfo) {
   doc.setFontSize(14);
   doc.text('RINCIAN LOGBOOK AKTIVITAS HARIAN', 15, 25);
 
-  const tableBody = logs.map((log, index) => [
-    index + 1,
-    formatDateIndonesian(log.date).replace(/^[A-Za-z]+,\s+/, ''), // Strip the day name to save table space
-    `${log.title}\n\n${log.description}`,
-    `${log.minutes} Menit`,
-    log.status
-  ]);
+  currentY = 32;
+  let currentPage = 2;
+  const margin = 15;
+  const usableWidth = pageWidth - 2 * margin; // 180mm
 
-  autoTable(doc, {
-    startY: 30,
-    head: [['No', 'Tanggal', 'Aktivitas & Deskripsi', 'Durasi', 'Status']],
-    body: tableBody,
-    theme: 'grid',
-    headStyles: {
-      fillColor: [71, 85, 105], // Slate 600
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 9,
-      halign: 'left'
-    },
-    columnStyles: {
-      0: { cellWidth: 10, halign: 'center' },
-      1: { cellWidth: 28 },
-      2: { cellWidth: 113 },
-      3: { cellWidth: 16, halign: 'center' },
-      4: { cellWidth: 20, halign: 'center' }
-    },
-    styles: {
-      fontSize: 8.5,
-      cellPadding: 3,
-      textColor: [51, 65, 85],
-      lineColor: [226, 232, 240],
-      overflow: 'linebreak'
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252]
-    },
-    margin: { left: 15, right: 15, bottom: 20, top: 20 },
-    didDrawPage: (data) => {
-      // Add page header and footer for subsequent pages
-      if (data.pageNumber > 1) {
-        // Redraw standard headers and footers on auto-created pages
-        drawPageHeader(data.pageNumber);
-        drawPageFooter();
-      }
+  // Sort logs chronologically by date ascending
+  const sortedLogs = [...logs].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Helper to format time range (e.g. 08.00 - 10.00)
+  const formatWaktu = (log: LogEntry): string => {
+    if (log.startTime && log.endTime) {
+      return `${log.startTime.replace(':', '.')} - ${log.endTime.replace(':', '.')}`;
     }
+    const start = log.startTime ? log.startTime.replace(':', '.') : '08.00';
+    if (log.endTime) {
+      return `${start} - ${log.endTime.replace(':', '.')}`;
+    }
+    const totalMinutes = log.minutes || 0;
+    const startHours = 8;
+    const startMinutes = 0;
+    const endHours = Math.floor(startHours + (startMinutes + totalMinutes) / 60);
+    const endMins = (startMinutes + totalMinutes) % 60;
+    const endStr = `${endHours.toString().padStart(2, '0')}.${endMins.toString().padStart(2, '0')}`;
+    return `${start} - ${endStr}`;
+  };
+
+  // Group logs by date
+  const groupedLogs: { [date: string]: LogEntry[] } = {};
+  sortedLogs.forEach((log) => {
+    if (!groupedLogs[log.date]) {
+      groupedLogs[log.date] = [];
+    }
+    groupedLogs[log.date].push(log);
   });
 
-  // Final draw page footer on page 2 (in case autoTable didn't overflow to 3rd page, we still need footer on page 2)
-  drawPageFooter();
+  interface PreparedEntry {
+    waktuText: string;
+    statusText: string;
+    titleLines: string[];
+    descLines: string[];
+    notesLines: string[];
+    entryHeight: number;
+  }
+
+  const lineSpacing = 4.5;
+  const headerHeight = 9;
+  const padding = 4;
+  const entrySpacing = 6; // gap between multiple entries on the same day
+
+  // Pre-process date groups and heights
+  const dateGroups = Object.keys(groupedLogs).sort().map(date => {
+    const entries = groupedLogs[date];
+    const preparedEntries: PreparedEntry[] = entries.map(log => {
+      const waktuText = formatWaktu(log);
+      const statusText = log.status;
+      
+      const titleLines: string[] = doc.splitTextToSize(`Aktivitas: ${log.title}`, usableWidth - 10);
+      const descLines: string[] = doc.splitTextToSize(`Deskripsi: ${log.description || '-'}`, usableWidth - 10);
+      const notesText = log.notes ? `Catatan/Refleksi: ${log.notes}` : '';
+      const notesLines: string[] = notesText ? doc.splitTextToSize(notesText, usableWidth - 10) : [];
+      
+      let entryHeight = 0;
+      entryHeight += lineSpacing; // for waktu & status line
+      entryHeight += 1; // small gap
+      entryHeight += titleLines.length * lineSpacing;
+      entryHeight += 1; // small gap
+      entryHeight += descLines.length * lineSpacing;
+      if (notesLines.length > 0) {
+        entryHeight += 1; // small gap
+        entryHeight += notesLines.length * lineSpacing;
+      }
+      
+      return {
+        waktuText,
+        statusText,
+        titleLines,
+        descLines,
+        notesLines,
+        entryHeight
+      };
+    });
+    
+    // Total height of the card for this date
+    let totalContentHeight = padding * 2;
+    preparedEntries.forEach((entry, idx) => {
+      totalContentHeight += entry.entryHeight;
+      if (idx < preparedEntries.length - 1) {
+        totalContentHeight += entrySpacing;
+      }
+    });
+    
+    const cardHeight = headerHeight + totalContentHeight;
+    
+    return {
+      date,
+      dateText: formatDateIndonesian(date),
+      preparedEntries,
+      cardHeight
+    };
+  });
+
+  dateGroups.forEach((group) => {
+    const { dateText, preparedEntries, cardHeight } = group;
+
+    // Page Break Check - if the card goes beyond printable area (adjusted to leave space for signature footer)
+    if (currentY + cardHeight > pageHeight - 42) {
+      doc.addPage();
+      currentPage++;
+      drawPageHeader(currentPage);
+      drawPageFooter(currentPage);
+      currentY = 25; // Reset Y on new page under header
+    }
+
+    const x = margin;
+    const y = currentY;
+
+    // Outer box with black border (Neo-brutalist theme matching Yati Magang)
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.4);
+    doc.rect(x, y, usableWidth, cardHeight, 'FD');
+
+    // Header strip for Tanggal
+    doc.setFillColor(241, 245, 249); // slate-100
+    doc.rect(x, y, usableWidth, headerHeight, 'FD');
+
+    // Date Text
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(dateText, x + 4, y + 6);
+
+    // Draw content inside the card
+    let textY = y + headerHeight + padding + 3.5;
+
+    preparedEntries.forEach((entry, idx) => {
+      // If not the first entry, draw a thin separator line
+      if (idx > 0) {
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(0.2);
+        doc.line(x + 4, textY - 4.5, x + usableWidth - 4, textY - 4.5);
+      }
+
+      // Entry Header: Waktu & Status
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8.5);
+      const entryWaktuStr = `Jam Kerja: ${entry.waktuText}`;
+      doc.text(entryWaktuStr, x + 4, textY);
+
+      const statusStr = `Status: ${entry.statusText}`;
+      const statusWidth = doc.getTextWidth(statusStr);
+      doc.text(statusStr, x + usableWidth - statusWidth - 4, textY);
+
+      textY += lineSpacing + 1;
+
+      // Title
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(9.5);
+      entry.titleLines.forEach(line => {
+        doc.text(line, x + 4, textY);
+        textY += lineSpacing;
+      });
+
+      textY += 1; // gap
+
+      // Description
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(51, 65, 85); // slate-700
+      entry.descLines.forEach(line => {
+        doc.text(line, x + 4, textY);
+        textY += lineSpacing;
+      });
+
+      // Notes / Reflection if any
+      if (entry.notesLines.length > 0) {
+        textY += 1; // gap
+        doc.setFont('Helvetica', 'oblique');
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139); // slate-500
+        entry.notesLines.forEach(line => {
+          doc.text(line, x + 4, textY);
+          textY += lineSpacing;
+        });
+      }
+
+      // Add space for the next entry
+      textY += entrySpacing - 1;
+    });
+
+    // Move Y coordinate to the next block with a small 5mm gap
+    currentY += cardHeight + 5;
+  });
+
+  // Finally ensure the last page has a footer drawn
+  drawPageFooter(currentPage);
 
   // Save the PDF
   const filename = `Logbook_Magang_${info.studentName.replace(/\s+/g, '_') || 'Yati_Magang'}.pdf`;

@@ -168,6 +168,17 @@ export default function AttendanceSystem({
   // Fetch location on mount
   useEffect(() => {
     getGeoLocation();
+  }, []);
+
+  // Keep temp states synchronized when officeLoc changes from elsewhere
+  useEffect(() => {
+    const hasCoords = officeLoc && (officeLoc.latitude !== 0 || officeLoc.longitude !== 0);
+    setTempLat(hasCoords ? officeLoc.latitude.toString() : '');
+    setTempLng(hasCoords ? officeLoc.longitude.toString() : '');
+    setTempRadius(officeLoc.radius ? officeLoc.radius.toString() : '600');
+    setTempName(officeLoc.name || '');
+    setTempWorkStart(officeLoc.workStart || '08:00');
+    setTempWorkEnd(officeLoc.workEnd || '17:00');
   }, [officeLoc]);
 
   // Handle office settings submit
@@ -1395,11 +1406,11 @@ export default function AttendanceSystem({
                         ) : log.clockInTime ? (
                           isTimeLater(log.clockInTime, officeLoc.workStart || '08:00') ? (
                             <span className="inline-block text-[#FF6B6B] bg-[#FF6B6B]/10 border-2 border-[#FF6B6B] px-1.5 py-0.5 text-[11px] font-black uppercase tracking-wider shadow-[1px_1px_0px_rgba(255,107,107,0.3)]">
-                              {log.clockInTime} (Terlambat)
+                              {log.clockInTime}
                             </span>
                           ) : (
-                            <span className="inline-block text-emerald-600 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 text-[11px] font-bold">
-                              {log.clockInTime} (Tepat Waktu)
+                            <span className="inline-block text-[#10B981] bg-[#10B981]/10 border-2 border-[#10B981] px-1.5 py-0.5 text-[11px] font-black uppercase tracking-wider shadow-[1px_1px_0px_rgba(16,185,129,0.3)]">
+                              {log.clockInTime}
                             </span>
                           )
                         ) : (
@@ -1420,15 +1431,9 @@ export default function AttendanceSystem({
                         {isSakitOrIzin ? (
                           '-'
                         ) : log.clockOutTime ? (
-                          isTimeLater(log.clockOutTime, officeLoc.workEnd || '17:00') ? (
-                            <span className="inline-block text-[#3B82F6] bg-[#3B82F6]/10 border-2 border-[#3B82F6] px-1.5 py-0.5 text-[11px] font-black uppercase tracking-wider shadow-[1px_1px_0px_rgba(59,130,246,0.3)]">
-                              {log.clockOutTime} (Selesai Kerja)
-                            </span>
-                          ) : (
-                            <span className="inline-block text-black/60 bg-black/5 border border-black/20 px-1.5 py-0.5 text-[11px]">
-                              {log.clockOutTime}
-                            </span>
-                          )
+                          <span className="inline-block text-black/60 bg-black/5 border border-black/20 px-1.5 py-0.5 text-[11px]">
+                            {log.clockOutTime}
+                          </span>
                         ) : (
                           '--:--:--'
                         )}
